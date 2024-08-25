@@ -15,9 +15,11 @@
     "@ckb-ccc/uni-sat": "0.0.12-alpha.1",
     "@ckb-ccc/utxo-global": "0.0.12-alpha.1",
     "@ckb-ccc/ccc-demo": "0.0.1",
-    "@ckb-ccc/faucet": "0.0.1"
+    "@ckb-ccc/faucet": "0.0.1",
+    "@ckb-ccc/rei": "0.0.12-alpha.0"
   },
   "changesets": [
-    "moody-geese-think"
+    "moody-geese-think",
+    "short-kiwis-allow"
   ]
 }
