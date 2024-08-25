@@ -6,6 +6,7 @@
   "scripts": {
     "test": "jest",
     "test:cov": "jest --coverage",
+    "build:prepare": "pnpm -r --filter !./packages/demo --filter !./packages/faucet install",
     "build": "pnpm -r --filter !./packages/demo --filter !./packages/faucet run build",
     "lint": "pnpm -r run lint",
     "format": "pnpm -r run format",
