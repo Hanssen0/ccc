@@ -1,7 +1,6 @@
 import { ccc } from "@ckb-ccc/core";
 import { JsonRpcTransformers } from "@ckb-ccc/core/advanced";
-import { injectCommonCobuildProof } from "../advanced.js";
-import { createSpores, meltSpores } from "../index.js";
+import { createSpore, meltSpore } from "..";
 
 describe("meltSpore [testnet]", () => {
   expect(process.env.PRIVATE_KEY).toBeDefined();
@@ -14,33 +13,23 @@ describe("meltSpore [testnet]", () => {
     );
 
     // Build melt transaction
-    let { tx: meltTx, actions: meltActions } = await meltSpores({
+    let { tx: meltTx } = await meltSpore({
       signer,
-      ids: [
-        // Change this if you have a different sporeId
-        "0xe41a6e19b70dcca7d8d9debc98d4c3b413a0fc69e0ae258bf24fbd5f92cca819",
-      ],
+      // Change this if you have a different sporeId
+      id: "0x4abfcdb57a9634b00efb03b92737ac107f5617eb36bb623c9db163fb54052ea4",
     });
 
     // Provide create transaction
-    let { tx, actions: createActions } = await createSpores({
+    let { tx } = await createSpore({
       signer,
       tx: meltTx,
-      spores: [
-        {
-          data: {
-            contentType: "text/plain",
-            content: ccc.bytesFrom("hello, spore", "utf8"),
-          },
-        },
-      ],
+      data: {
+        contentType: "text/plain",
+        content: ccc.bytesFrom("hello, spore", "utf8"),
+      },
     });
 
-    // Combine actions
-    const actions = [...meltActions, ...createActions];
-
     // Complete transaction
-    tx = injectCommonCobuildProof(tx, actions);
     await tx.completeFeeBy(signer, 1000);
     tx = await signer.signTransaction(tx);
     console.log(JSON.stringify(JsonRpcTransformers.transactionFrom(tx)));

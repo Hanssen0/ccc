@@ -1,7 +1,6 @@
 import { ccc } from "@ckb-ccc/core";
 import { JsonRpcTransformers } from "@ckb-ccc/core/advanced";
-import { injectCommonCobuildProof } from "../advanced";
-import { transferSpores } from "../api/spore";
+import { transferSpore } from "../index.js";
 
 describe("transferSpore [testnet]", () => {
   expect(process.env.PRIVATE_KEY).toBeDefined();
@@ -20,25 +19,20 @@ describe("transferSpore [testnet]", () => {
     );
 
     // Build transaction
-    let { tx, actions } = await transferSpores({
+    let { tx } = await transferSpore({
       signer,
-      spores: [
-        {
-          // Change this if you have a different sporeId
-          id: "0x9d6352fd9815badcb543d4260c2ab0f8404ca61da72c8f023dd55818c2c97af8",
-          to: owner.script,
-        },
-      ],
+      // Change this if you have a different sporeId
+      id: "0x22cc6272ce14488b27e67519915a5574701eec36a2fdca6c24174ac66c77d01a",
+      to: owner.script,
     });
 
     // Complete transaction
-    tx = injectCommonCobuildProof(tx, actions);
     await tx.completeFeeBy(signer, 1000);
     tx = await signer.signTransaction(tx);
     console.log(JSON.stringify(JsonRpcTransformers.transactionFrom(tx)));
 
     // Send transaction
-    let txHash = await signer.sendTransaction(tx);
+    let txHash = await signer.client.sendTransaction(tx);
     console.log(txHash);
   }, 60000);
 });

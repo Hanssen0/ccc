@@ -1,8 +1,7 @@
 import { ccc } from "@ckb-ccc/core";
 import { JsonRpcTransformers } from "@ckb-ccc/core/advanced";
 import "dotenv/config";
-import { injectCommonCobuildProof } from "../advanced";
-import { createSpores } from "../api/spore.js";
+import { createSpore } from "../index.js";
 
 describe("createSpore [testnet]", () => {
   expect(process.env.PRIVATE_KEY).toBeDefined();
@@ -15,21 +14,16 @@ describe("createSpore [testnet]", () => {
     );
 
     // Build transaction
-    let { tx, actions, ids } = await createSpores({
+    let { tx, id } = await createSpore({
       signer,
-      spores: [
-        {
-          data: {
-            contentType: "text/plain",
-            content: ccc.bytesFrom("hello, spore", "utf8"),
-          },
-        },
-      ],
+      data: {
+        contentType: "text/plain",
+        content: ccc.bytesFrom("hello, spore", "utf8"),
+      },
     });
-    console.log("sporeIds:", ids);
+    console.log("sporeId:", id);
 
     // Complete transaction
-    tx = injectCommonCobuildProof(tx, actions);
     await tx.completeFeeBy(signer, 1000);
     tx = await signer.signTransaction(tx);
     console.log(JSON.stringify(JsonRpcTransformers.transactionFrom(tx)));
