@@ -22,7 +22,7 @@ describe("transferSpore [testnet]", () => {
     let { tx } = await transferSpore({
       signer,
       // Change this if you have a different sporeId
-      id: "0x22cc6272ce14488b27e67519915a5574701eec36a2fdca6c24174ac66c77d01a",
+      id: "0x293c6e579dcb8a66f9877517ea45bc9bba0d2513b33970606dfd2c6f3d27c2f0",
       to: owner.script,
     });
 

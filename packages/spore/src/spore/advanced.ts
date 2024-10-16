@@ -3,7 +3,7 @@ import { UnpackResult } from "@ckb-lumos/codec";
 import { assembleTransferClusterAction } from "../advanced.js";
 import { assertCluster } from "../cluster/index.js";
 import { Action, SporeData } from "../codec/index.js";
-import { searchOneCellByLock } from "../helper/index.js";
+import { searchOneCellBySigner } from "../helper/index.js";
 
 export async function prepareCluster(
   signer: ccc.Signer,
@@ -32,7 +32,9 @@ export async function prepareCluster(
       const lock = cluster.cellOutput.lock;
 
       if (!(await tx.findInputIndexByLock(lock, signer.client))) {
-        const proxy = await searchOneCellByLock(signer);
+        // note: We can only search proxy of signer, if any custom logic is in need, developer should get
+        // the proxy filled in transaction before invoking `createSpore`
+        const proxy = await searchOneCellBySigner(signer);
         if (!proxy) {
           throw new Error("Cluster lock proxy cell not found");
         }

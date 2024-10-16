@@ -21,7 +21,7 @@ describe("transferCluster [testnet]", () => {
     // Build transaction
     let { tx } = await transferSporeCluster({
       signer,
-      id: "0xd0138f33157a2027c7190ffd1492b3666ced8794fb8820da3c69927a83c52c32",
+      id: "0xcf95169f4843b7647837c7cf7e54e5ce7fbc3c7a5ce3c56898b54525d40d72d6",
       to: owner.script,
     });
 

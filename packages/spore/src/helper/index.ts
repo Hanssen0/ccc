@@ -7,9 +7,9 @@ export async function findSingletonCellByArgs(
   scripts: (SporeScriptInfoLike | undefined)[],
 ): Promise<
   | {
-      cell: ccc.Cell;
-      scriptInfo: SporeScriptInfo;
-    }
+    cell: ccc.Cell;
+    scriptInfo: SporeScriptInfo;
+  }
   | undefined
 > {
   for (const scriptInfo of scripts) {
@@ -34,7 +34,7 @@ export async function findSingletonCellByArgs(
   }
 }
 
-export async function searchOneCellByLock(
+export async function searchOneCellBySigner(
   signer: ccc.Signer,
 ): Promise<ccc.Cell | undefined> {
   for await (const cell of signer.findCells(
@@ -54,7 +54,7 @@ export async function injectOneCapacityCell(
   signer: ccc.Signer,
   tx: ccc.Transaction,
 ): Promise<void> {
-  const liveCell = await searchOneCellByLock(signer);
+  const liveCell = await searchOneCellBySigner(signer);
   if (!liveCell) {
     throw new Error("No live cell found");
   }

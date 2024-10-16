@@ -30,7 +30,7 @@ describe("createSpore [testnet]", () => {
         contentType: "dob/1",
         content: ccc.bytesFrom(content, "utf8"),
         clusterId:
-          "0xaf14384d05ef7a9dfaaa51dd6283506ec7a9578ec53ca5ffd23cb790166cbc14",
+          "0xcf95169f4843b7647837c7cf7e54e5ce7fbc3c7a5ce3c56898b54525d40d72d6",
       },
       clusterMode: "clusterCell",
     });

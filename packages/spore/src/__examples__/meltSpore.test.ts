@@ -16,7 +16,7 @@ describe("meltSpore [testnet]", () => {
     let { tx } = await meltSpore({
       signer,
       // Change this if you have a different sporeId
-      id: "0xd413acd003c0913f0da53fc0ba1c3185d10fad5ebfad9bc449c87e8e7b2efc1d",
+      id: "0x1281272e54985fa1e8c876538bad584267123eac16cbfa87534920a6d35e3a4b",
     });
 
     // Complete transaction
