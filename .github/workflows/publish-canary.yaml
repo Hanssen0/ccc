@@ -1,13 +1,6 @@
-name: Release to NPM
+name: Release to NPM Canary
 
-permissions:
-  pull-requests: write
-  contents: write
-
-on:
-  push:
-    branches:
-      - master
+on: workflow_dispatch
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
@@ -29,14 +22,7 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Create Release Pull Request or Publish to npm
-        id: changesets
-        uses: changesets/action@v1
-        with:
-          title: "chore: bump packages version"
-          commit: "chore: bump packages version"
-          version: pnpm run version
-          publish: pnpm changeset publish
+      - name: Publish to npm Canary
+        run: pnpm run version && pnpm changeset publish --tag canary
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
