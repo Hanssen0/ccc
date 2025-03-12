@@ -1,5 +1,31 @@
 # @ckb-ccc/core
 
+## 1.6.0
+
+### Minor Changes
+
+- [#159](https://github.com/ckb-devrel/ccc/pull/159) [`80e605d`](https://github.com/ckb-devrel/ccc/commit/80e605d0645e87b4e8b5be85c63322f7a3926e38) Thanks [@Hanssen0](https://github.com/Hanssen0)! - feat(core): stringify util
+
+- [#158](https://github.com/ckb-devrel/ccc/pull/158) [`d584059`](https://github.com/ckb-devrel/ccc/commit/d584059644e8bcd3a0ea8b0314fdcbb68ee66013) Thanks [@Hanssen0](https://github.com/Hanssen0)! - feat(core): more rpc calls cache
+
+- [`ec0b278`](https://github.com/ckb-devrel/ccc/commit/ec0b27891a1c30828317893b13f582a21a8671ab) Thanks [@Hanssen0](https://github.com/Hanssen0)! - feat(core): Transaction.getFee
+
+- [#153](https://github.com/ckb-devrel/ccc/pull/153) [`1e88ad8`](https://github.com/ckb-devrel/ccc/commit/1e88ad8743428b46b28fe790bd559b96df8a6ce4) Thanks [@Hanssen0](https://github.com/Hanssen0)! - feat(core): fee rate checks
+
+- [#158](https://github.com/ckb-devrel/ccc/pull/158) [`6f10589`](https://github.com/ckb-devrel/ccc/commit/6f1058977e7aa113808fa74793f1ad5d672626d2) Thanks [@Hanssen0](https://github.com/Hanssen0)! - feat(core): Transaction utils
+
+- [`f69f245`](https://github.com/ckb-devrel/ccc/commit/f69f2459b39a3ad674fd38836c0d7a61a760b8ee) Thanks [@Hanssen0](https://github.com/Hanssen0)! - feat(core): calculate Nervos DAO profit as input capacity
+
+### Patch Changes
+
+- [#166](https://github.com/ckb-devrel/ccc/pull/166) [`90b6e9f`](https://github.com/ckb-devrel/ccc/commit/90b6e9fee543b6ee16b96e27d6f86ff33fc57029) Thanks [@Hanssen0](https://github.com/Hanssen0)! - chore: bump @joyid/ckb version
+
+- [#153](https://github.com/ckb-devrel/ccc/pull/153) [`def62a0`](https://github.com/ckb-devrel/ccc/commit/def62a08bf908c6a21fe91c8db2c60848a2ada52) Thanks [@Hanssen0](https://github.com/Hanssen0)! - fix(core): uncatched websocket error
+
+- [#159](https://github.com/ckb-devrel/ccc/pull/159) [`d7728d9`](https://github.com/ckb-devrel/ccc/commit/d7728d9edb46c9c5a2bfeb342fc68a8b1c0fec5d) Thanks [@Hanssen0](https://github.com/Hanssen0)! - chore(core): remove ankr public node from default
+
+- [`29a2e22`](https://github.com/ckb-devrel/ccc/commit/29a2e223b902ed23523e4948ab3fca793f9e5b01) Thanks [@Hanssen0](https://github.com/Hanssen0)! - chore: bump @joyid/ckb version
+
 ## 1.5.0
 
 ### Minor Changes
