@@ -1,5 +1,12 @@
 # @ckb-ccc/xverse
 
+## 1.0.17
+
+### Patch Changes
+
+- Updated dependencies [[`98c3b15`](https://github.com/ckb-devrel/ccc/commit/98c3b1573ce5065e8e31d7bc821f54a5058b8849), [`34fc83d`](https://github.com/ckb-devrel/ccc/commit/34fc83d316a99889f3019d8069c478113506fe7a)]:
+  - @ckb-ccc/core@1.8.1
+
 ## 1.0.16
 
 ### Patch Changes
