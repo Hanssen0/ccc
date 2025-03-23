@@ -1,5 +1,13 @@
 # @ckb-ccc/core
 
+## 1.8.1
+
+### Patch Changes
+
+- [`98c3b15`](https://github.com/ckb-devrel/ccc/commit/98c3b1573ce5065e8e31d7bc821f54a5058b8849) Thanks [@Hanssen0](https://github.com/Hanssen0)! - fix(core): keep molecule entity class name
+
+- [#188](https://github.com/ckb-devrel/ccc/pull/188) [`34fc83d`](https://github.com/ckb-devrel/ccc/commit/34fc83d316a99889f3019d8069c478113506fe7a) Thanks [@Hanssen0](https://github.com/Hanssen0)! - feat(core): SignerNostrPrivateKey support nsec key
+
 ## 1.8.0
 
 ### Minor Changes
