@@ -35,5 +35,6 @@
   "themeColor": "#434343",
   "favicon": "assets/logo.svg",
   "customDescription": "Docs for CCC",
-  "footerLastModified": true
+  "footerLastModified": true,
+  "out": "api-docs"
 }
