@@ -1,5 +1,15 @@
 # @ckb-ccc/shell
 
+## 1.1.9
+
+### Patch Changes
+
+- Updated dependencies [[`61b6986`](https://github.com/ckb-devrel/ccc/commit/61b69868f0a17e77699627d3af298573540557a3)]:
+  - @ckb-ccc/core@1.8.1
+  - @ckb-ccc/spore@1.5.1
+  - @ckb-ccc/ssri@0.2.7
+  - @ckb-ccc/udt@0.1.9
+
 ## 1.1.8
 
 ### Patch Changes
