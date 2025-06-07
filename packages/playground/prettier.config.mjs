@@ -8,8 +8,8 @@ const config = {
   singleQuote: false,
   trailingComma: "all",
   plugins: [
-    await import("prettier-plugin-organize-imports/index.js"),
-    await import("prettier-plugin-tailwindcss"),
+    import.meta.resolve("prettier-plugin-organize-imports/index.js"),
+    import.meta.resolve("prettier-plugin-tailwindcss"),
   ],
 };
 
