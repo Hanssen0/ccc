@@ -100,7 +100,7 @@ export default function TransferLumos() {
               const dataBytes = (() => {
                 try {
                   return ccc.bytesFrom(data);
-                } catch (e) {}
+                } catch (_e) {}
 
                 return ccc.bytesFrom(data, "utf8");
               })();

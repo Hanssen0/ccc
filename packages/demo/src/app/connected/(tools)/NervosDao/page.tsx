@@ -19,7 +19,7 @@ function parseEpoch(epoch: ccc.Epoch): ccc.FixedPoint {
 
 function DaoButton({ dao }: { dao: ccc.Cell }) {
   const { signer, createSender } = useApp();
-  const { log, error } = createSender("Transfer");
+  const { log } = createSender("Transfer");
 
   const { explorerTransaction } = useGetExplorerLink();
 

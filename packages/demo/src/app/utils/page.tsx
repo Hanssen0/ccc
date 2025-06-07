@@ -1,7 +1,6 @@
 "use client";
 
 import { useApp } from "@/src/context";
-import { Dropdown } from "@/src/components/Dropdown";
 import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { icons } from "lucide-react";

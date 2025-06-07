@@ -206,7 +206,7 @@ export default function CreateSporeCluster() {
                 const compressed = JSON.stringify(JSON.parse(description));
                 log("JSON object description was compressed");
                 return compressed;
-              } catch (err) {
+              } catch (_err) {
                 warn(
                   "Failed to parse description as JSON object, leaving it unchanged",
                 );

@@ -66,7 +66,7 @@ export async function enhanceDisplay(
           })}
         />
       );
-    } catch (err) {}
+    } catch (_err) {}
   }
 
   if (msg instanceof ccc.Signer) {

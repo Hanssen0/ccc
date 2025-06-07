@@ -39,6 +39,7 @@ export function ParameterInput({
   setMethodPathInput,
   onDelete,
 }: ParameterInputProps) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const updateParamValue = (value: any) => {
     setParamValues({
       ...paramValues,

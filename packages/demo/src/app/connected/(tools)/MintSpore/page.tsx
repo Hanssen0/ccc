@@ -39,7 +39,7 @@ export default function MintSpore() {
         const compressed = JSON.stringify(JSON.parse(content));
         log("JSON object content was compressed");
         return compressed;
-      } catch (err) {
+      } catch (_err) {
         warn("Failed to parse content as JSON object, leaving it unchanged");
         return content;
       }

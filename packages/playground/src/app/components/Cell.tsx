@@ -89,7 +89,7 @@ export function CellInfo({
         setCellOutput(cellOutput);
         setOutputData(outputData);
         setDaoProfit(extraCapacity);
-      } catch (err) {
+      } catch (_err) {
         return;
       }
     })();
@@ -164,7 +164,7 @@ export function Cell({
         setCellOutput(cellOutput);
         setOutputData(outputData);
         setDaoProfit(extraCapacity);
-      } catch (err) {
+      } catch (_err) {
         return;
       }
     })();

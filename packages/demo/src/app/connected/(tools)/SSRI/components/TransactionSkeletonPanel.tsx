@@ -1,4 +1,4 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import { Button } from "@/src/components/Button";
 import { ccc } from "@ckb-ccc/connector-react";
 import JsonView from "@uiw/react-json-view";
@@ -9,12 +9,12 @@ import { ParamValue } from "../types";
 interface TransactionSkeletonPanelProps {
   transactionResult: ccc.Transaction;
   setTransactionResult: (tx: ccc.Transaction) => void;
-  signer: any;
+  signer?: ccc.Signer;
   methodParams: MethodParam[];
   paramValues: Record<string, ParamValue>;
   contractOutPointTx: string;
   contractOutPointIndex: string;
-  log: (message: string, ...args: any[]) => void;
+  log: (message: string, ...args: ReactNode[]) => void;
 }
 
 export function TransactionSkeletonPanel({

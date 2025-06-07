@@ -24,7 +24,7 @@ export default function TransferSpore() {
     }
 
     (async () => {
-      let list = [];
+      const list: { id: string; name: string }[] = [];
       for await (const { spore, sporeData } of ccc.spore.findSporesBySigner({
         signer,
         order: "desc",
