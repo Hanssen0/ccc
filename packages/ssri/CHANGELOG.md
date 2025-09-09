@@ -1,5 +1,16 @@
 # @ckb-ccc/ssri
 
+## 0.2.16
+### Patch Changes
+
+
+
+- [`98ed86b`](https://github.com/ckb-devrel/ccc/commit/98ed86bc0e1ab591ed6d442a1d7b2a09515e30ba) Thanks [@Hanssen0](https://github.com/Hanssen0)! - feat(core): add `CellAny`
+  
+  It's definitely a mistake to name `CellOnChain` `Cell`, but there is nothing we can do with that right now. To avoid more duplicate code, `CellAny` was added to represent a cell that's on-chain or off-chain.
+- Updated dependencies [[`ab91395`](https://github.com/ckb-devrel/ccc/commit/ab91395f7f4e1b03070615de977e8a7183fd6bff), [`98ed86b`](https://github.com/ckb-devrel/ccc/commit/98ed86bc0e1ab591ed6d442a1d7b2a09515e30ba)]:
+  - @ckb-ccc/core@1.12.0
+
 ## 0.2.15
 ### Patch Changes
 

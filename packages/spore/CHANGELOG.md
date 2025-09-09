@@ -1,5 +1,11 @@
 # @ckb-ccc/spore
 
+## 1.5.10
+### Patch Changes
+
+- Updated dependencies [[`ab91395`](https://github.com/ckb-devrel/ccc/commit/ab91395f7f4e1b03070615de977e8a7183fd6bff), [`98ed86b`](https://github.com/ckb-devrel/ccc/commit/98ed86bc0e1ab591ed6d442a1d7b2a09515e30ba)]:
+  - @ckb-ccc/core@1.12.0
+
 ## 1.5.9
 ### Patch Changes
 
