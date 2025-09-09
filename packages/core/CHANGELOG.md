@@ -1,5 +1,19 @@
 # @ckb-ccc/core
 
+## 1.11.5
+### Patch Changes
+
+
+
+- [#306](https://github.com/ckb-devrel/ccc/pull/306) [`298082b`](https://github.com/ckb-devrel/ccc/commit/298082b601cf1a360e9d8578c7ad57a2a4720cdb) Thanks [@Hanssen0](https://github.com/Hanssen0)! - fix(core): nostr signature verification
+
+
+
+- [#304](https://github.com/ckb-devrel/ccc/pull/304) [`c95913f`](https://github.com/ckb-devrel/ccc/commit/c95913f58c889c9d8c0b164014f9917501c11dbc) Thanks [@Hanssen0](https://github.com/Hanssen0)! - fix(core): `ccc.mol.codec` decorator
+  
+  * The runtime will invoke the decorator with 2 arguments, but the decorator expects 1.
+  * Decorator function return type '...' is not assignable to type '...'
+
 ## 1.11.4
 ### Patch Changes
 
