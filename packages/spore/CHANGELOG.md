@@ -1,5 +1,15 @@
 # @ckb-ccc/spore
 
+## 1.5.11
+### Patch Changes
+
+
+
+- [`518ac9d`](https://github.com/ckb-devrel/ccc/commit/518ac9d5773c9846f16b23702d4a000a36a55437) Thanks [@Hanssen0](https://github.com/Hanssen0)! - chore(deps): bump dependency version with `--latest`
+
+- Updated dependencies [[`518ac9d`](https://github.com/ckb-devrel/ccc/commit/518ac9d5773c9846f16b23702d4a000a36a55437), [`12c1e6b`](https://github.com/ckb-devrel/ccc/commit/12c1e6b751de220898ed94998027c7cf07c7a7dc), [`d382469`](https://github.com/ckb-devrel/ccc/commit/d382469ffca7934f19d0156af6939d7794808265), [`50b5537`](https://github.com/ckb-devrel/ccc/commit/50b553715f150ca7c68a661c7cbf8696ec674846)]:
+  - @ckb-ccc/core@1.12.0
+
 ## 1.5.10
 ### Patch Changes
 

@@ -1,5 +1,29 @@
 # @ckb-ccc/core
 
+## 1.12.0
+### Minor Changes
+
+
+
+- [#308](https://github.com/ckb-devrel/ccc/pull/308) [`12c1e6b`](https://github.com/ckb-devrel/ccc/commit/12c1e6b751de220898ed94998027c7cf07c7a7dc) Thanks [@github-actions](https://github.com/apps/github-actions)! - feat(core): `messageHashBtcEcdsa`
+  
+  Removed dependency on outdated `bitcoinjs-message`.
+
+
+- [#308](https://github.com/ckb-devrel/ccc/pull/308) [`50b5537`](https://github.com/ckb-devrel/ccc/commit/50b553715f150ca7c68a661c7cbf8696ec674846) Thanks [@github-actions](https://github.com/apps/github-actions)! - feat(core): add `CellAny`
+  
+  It's definitely a mistake to name `CellOnChain` `Cell`, but there is nothing we can do with that right now. To avoid more duplicate code, `CellAny` was added to represent a cell that's on-chain or off-chain.
+
+### Patch Changes
+
+
+
+- [`518ac9d`](https://github.com/ckb-devrel/ccc/commit/518ac9d5773c9846f16b23702d4a000a36a55437) Thanks [@Hanssen0](https://github.com/Hanssen0)! - chore(deps): bump dependency version with `--latest`
+
+
+
+- [#308](https://github.com/ckb-devrel/ccc/pull/308) [`d382469`](https://github.com/ckb-devrel/ccc/commit/d382469ffca7934f19d0156af6939d7794808265) Thanks [@github-actions](https://github.com/apps/github-actions)! - feat(core): default `Signer.prepareTransaction`
+
 ## 1.11.5
 ### Patch Changes
 
