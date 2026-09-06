@@ -559,7 +559,9 @@ export class KhiePairing extends LitElement {
       }
 
       .qr-code {
+        /* I hate Apple */
         width: min(22rem, calc(100% - 1.5rem));
+        height: min(22rem, calc(100vw - 5.5rem));
       }
 
       .pairing-layout {
