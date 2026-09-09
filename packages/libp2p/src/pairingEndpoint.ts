@@ -3,6 +3,9 @@ import { multiaddr, type Multiaddr } from "@multiformats/multiaddr";
 import * as lp from "it-length-prefixed";
 import type { PairingTarget } from "./pairingService.js";
 
+const MAX_DECOMPRESSED_ADDRESSES_LENGTH = 16 * 1024;
+const MAX_ADDRESSES = 16;
+
 export async function encodePairingEndpoint(
   endpointUrl: string,
   addresses: readonly Multiaddr[],
@@ -11,14 +14,23 @@ export async function encodePairingEndpoint(
   if (addresses.length === 0) {
     throw new Error("Pairing endpoint requires at least one address");
   }
+  if (addresses.length > MAX_ADDRESSES) {
+    throw new Error(
+      `Pairing endpoint supports at most ${MAX_ADDRESSES} addresses`,
+    );
+  }
 
-  const encodedAddresses = ccc.bytesTo(
-    await transformBytes(
-      encodeAddresses(addresses),
-      new CompressionStream("deflate"),
-    ),
-    "base64url",
+  const addressBytes = encodeAddresses(addresses);
+  if (addressBytes.byteLength > MAX_DECOMPRESSED_ADDRESSES_LENGTH) {
+    throw new Error("Pairing endpoint address data is too large");
+  }
+
+  const compressedAddressBytes = await transformBytes(
+    addressBytes,
+    new CompressionStream("deflate"),
   );
+
+  const encodedAddresses = ccc.bytesTo(compressedAddressBytes, "base64url");
 
   const url = new URL(endpointUrl);
   const params = url.searchParams;
@@ -56,13 +68,21 @@ function encodeAddresses(addresses: readonly Multiaddr[]): Uint8Array {
 
 async function decodeCompressedAddresses(value: string): Promise<Multiaddr[]> {
   try {
+    const compressedBytes = ccc.bytesFrom(value, "base64url");
     const bytes = await transformBytes(
-      ccc.bytesFrom(value, "base64url"),
+      compressedBytes,
       new DecompressionStream("deflate"),
+      MAX_DECOMPRESSED_ADDRESSES_LENGTH,
     );
-    const addresses = Array.from(lp.decode([bytes]), (address) =>
-      multiaddr(address.subarray()),
-    );
+    const addresses: Multiaddr[] = [];
+    for (const address of lp.decode([bytes], {
+      maxDataLength: MAX_DECOMPRESSED_ADDRESSES_LENGTH,
+    })) {
+      if (addresses.length >= MAX_ADDRESSES) {
+        throw new Error("Too many addresses");
+      }
+      addresses.push(multiaddr(address.subarray()));
+    }
 
     if (addresses.length === 0) {
       throw new Error("Missing addresses");
@@ -78,8 +98,13 @@ async function decodeCompressedAddresses(value: string): Promise<Multiaddr[]> {
 async function transformBytes(
   bytes: Uint8Array,
   transform: CompressionStream | DecompressionStream,
+  maxOutputLength?: number,
 ) {
-  const output = new Response(transform.readable).arrayBuffer().then(
+  const readable =
+    maxOutputLength === undefined
+      ? transform.readable
+      : transform.readable.pipeThrough(limitBytes(maxOutputLength));
+  const output = new Response(readable).arrayBuffer().then(
     (buffer) => ({ buffer, ok: true }) as const,
     (error: unknown) => ({ error, ok: false }) as const,
   );
@@ -88,7 +113,10 @@ async function transformBytes(
     await writer.write(Uint8Array.from(bytes));
     await writer.close();
   } catch (cause) {
-    await output;
+    const result = await output;
+    if (!result.ok) {
+      throw result.error;
+    }
     throw cause;
   }
 
@@ -97,4 +125,18 @@ async function transformBytes(
     throw result.error;
   }
   return new Uint8Array(result.buffer);
+}
+
+function limitBytes(maxLength: number) {
+  let length = 0;
+
+  return new TransformStream<Uint8Array, Uint8Array>({
+    transform(chunk, controller) {
+      if (chunk.byteLength > maxLength - length) {
+        throw new Error("Decompressed address data is too large");
+      }
+      length += chunk.byteLength;
+      controller.enqueue(chunk);
+    },
+  });
 }
