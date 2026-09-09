@@ -96,7 +96,7 @@ export class KhiePairing extends LitElement {
   };
 
   private scannerError = (event: ErrorEvent) => {
-    this.localError = `Unable to scan QR code: ${errorMessage(event.error)}`;
+    this.localError = `Unable to scan pairing code: ${errorMessage(event.error)}`;
     this.isScanning = false;
   };
 
@@ -104,6 +104,7 @@ export class KhiePairing extends LitElement {
     const {
       canPair,
       error: sessionError,
+      errorKind,
       ownEndpoint,
       phase,
       relayState,
@@ -141,12 +142,12 @@ export class KhiePairing extends LitElement {
     return html`
       <div class="pairing-layout">
         <section class="field pairing-side own-side">
-          <label>To be linked</label>
+          <label>Let a wallet scan this</label>
           <div class="endpoint-pair">
             <ccc-qr-code
               class="qr-code"
               .value=${ownEndpoint}
-              alt="Khie pairing endpoint"
+              alt="Connector pairing code"
               @error=${(event: ErrorEvent) => {
                 this.localError = errorMessage(event.error);
               }}
@@ -160,8 +161,8 @@ export class KhiePairing extends LitElement {
                   ? html`<ccc-copy-button
                       .value=${ownEndpoint}
                       class="endpoint-copy"
-                      title="Copy endpoint"
-                      aria-label="Copy pairing endpoint"
+                      title="Copy pairing code"
+                      aria-label="Copy connector pairing code"
                       @error=${(event: ErrorEvent) => {
                         this.localError = errorMessage(event.error);
                       }}
@@ -178,17 +179,17 @@ export class KhiePairing extends LitElement {
         <div class="divider" aria-hidden="true"><span>or</span></div>
 
         <section class="field pairing-side remote-side">
-          <label>To link</label>
+          <label>Scan a wallet</label>
           <div class="remote-actions">
             <ccc-button @click=${() => this.startScanner()}>
-              ${SCAN_SVG} Scan to Khie
+              ${SCAN_SVG} Scan a wallet
             </ccc-button>
             <div class="endpoint-control">
               <ccc-input
                 class="endpoint-input"
                 .value=${this.khieEndpoint}
-                aria-label="Remote endpoint"
-                placeholder="Or paste endpoint"
+                aria-label="Wallet pairing code"
+                placeholder="Or paste pairing code"
                 spellcheck="false"
                 @input=${(event: InputEvent) => {
                   this.khieEndpoint = (
@@ -267,7 +268,31 @@ export class KhiePairing extends LitElement {
             : undefined
         }
       </div>
-      ${error ? html`<span class="error">${error}</span>` : undefined}
+      ${
+        error && !this.localError && errorKind === "incompatible-peer"
+          ? html`<div class="compatibility-help" role="alert">
+              <strong>This is not a compatible Khie pairing code</strong>
+              <span>
+                Scan a pairing code from a wallet.
+                ${
+                  this.khieEndpoint
+                    ? html`<a
+                        href=${this.khieEndpoint}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        >Go here to learn more.</a
+                      >`
+                    : undefined
+                }
+              </span>
+            </div>`
+          : undefined
+      }
+      ${
+        error && (this.localError || errorKind !== "incompatible-peer")
+          ? html`<span class="error">${error}</span>`
+          : undefined
+      }
     `;
   }
 
@@ -549,6 +574,30 @@ export class KhiePairing extends LitElement {
       color: var(--tip-color);
       font-size: 0.8rem;
       text-align: center;
+    }
+
+    .compatibility-help {
+      display: grid;
+      padding: 0.8rem 0.9rem;
+      border: 1px solid var(--divider);
+      border-radius: 0.4rem;
+      gap: 0.3rem;
+    }
+
+    .compatibility-help strong {
+      font-size: 0.85rem;
+    }
+
+    .compatibility-help span {
+      color: var(--tip-color);
+      font-size: 0.78rem;
+      line-height: 1.45;
+    }
+
+    .compatibility-help a {
+      color: inherit;
+      text-decoration: underline;
+      text-underline-offset: 0.15em;
     }
 
     @media (max-width: 40rem) {

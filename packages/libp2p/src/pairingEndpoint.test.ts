@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import {
   decodePairingEndpoint,
   encodePairingEndpoint,
+  PairingEndpointRoleError,
 } from "./pairingEndpoint.js";
 
 const addresses = [
@@ -38,14 +39,40 @@ describe("pairing endpoint", () => {
       "https://app.ckbccc.com/#signer",
       addresses,
       "pairing-secret",
+      "provider",
     );
     const url = new URL(endpoint);
 
+    expect(url.searchParams.get("role")).toBe("provider");
     expect(url.searchParams.get("addresses")).toMatch(/^[\w-]+$/);
     expect(url.searchParams.has("addr")).toBe(false);
-    await expect(decodePairingEndpoint(endpoint)).resolves.toMatchObject({
+    await expect(
+      decodePairingEndpoint(endpoint, "provider"),
+    ).resolves.toMatchObject({
       addresses,
       secret: "pairing-secret",
+    });
+  });
+
+  it("rejects an unexpected or missing endpoint role", async () => {
+    const endpoint = await encodePairingEndpoint(
+      "https://app.ckbccc.com/#signer",
+      addresses,
+      "pairing-secret",
+      "provider",
+    );
+
+    await expect(
+      decodePairingEndpoint(endpoint, "connector"),
+    ).rejects.toBeInstanceOf(PairingEndpointRoleError);
+
+    const url = new URL(endpoint);
+    url.searchParams.delete("role");
+    await expect(
+      decodePairingEndpoint(url.toString(), "provider"),
+    ).rejects.toMatchObject({
+      actualRole: undefined,
+      expectedRole: "provider",
     });
   });
 

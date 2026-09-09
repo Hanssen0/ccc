@@ -1,6 +1,7 @@
 "use client";
 
 import { ccc } from "@ckb-ccc/connector-react";
+import { Libp2p } from "@ckb-ccc/libp2p";
 import { ArrowRight, Check, ChevronDown, ScanLine, X } from "lucide-react";
 import {
   type CSSProperties,
@@ -35,7 +36,7 @@ type ApprovalPrompt = ccc.SignerJsonRpcConfirmation & {
 };
 type RelayState = "connected" | "connecting" | "failed" | "idle";
 
-const ENDPOINT_URL = "https://app.ckbccc.com/#khie";
+const PROVIDER_ENDPOINT_URL = "https://app.ckbccc.com/#khie";
 const JSON_RPC_REQUEST_TIMEOUT_MS = 120_000;
 
 export function KhieClientModule({
@@ -64,6 +65,7 @@ export function KhieClientModule({
   const [approval, setApproval] = useState<ApprovalPrompt>();
   const [queuedApprovalCount, setQueuedApprovalCount] = useState(0);
   const [remotePeer, setRemotePeer] = useState<KhieRemotePeer>();
+  const [incompatiblePeerError, setIncompatiblePeerError] = useState<string>();
 
   const signerRef = useRef(signer);
   const signerWaiters = useRef(new Set<SignerWaiter>());
@@ -77,6 +79,9 @@ export function KhieClientModule({
   const showCurrent = useEffectEvent(show);
   const logCurrent = useEffectEvent(log);
   const reportCurrentError = useEffectEvent((cause: unknown) => {
+    setIncompatiblePeerError(
+      isIncompatiblePeerError(cause) ? cause.message : undefined,
+    );
     reportError(cause, show, log);
   });
   const getSignerMetadata = useEffectEvent(() => ({
@@ -238,6 +243,7 @@ export function KhieClientModule({
         return;
       }
 
+      setIncompatiblePeerError(undefined);
       setPairing(true);
       try {
         if (await session.pair(address)) {
@@ -259,7 +265,7 @@ export function KhieClientModule({
     logCurrent("Starting signer libp2p node");
 
     const owner = KhieSignerSession.open({
-      endpointUrl: ENDPOINT_URL,
+      endpointUrl: PROVIDER_ENDPOINT_URL,
       handler: async (payload) => {
         const controller = new AbortController();
         const { signal } = controller;
@@ -312,6 +318,7 @@ export function KhieClientModule({
       onEndpointChange: setPairingEndpoint,
       onError: reportCurrentError,
       onPaired: () => {
+        setIncompatiblePeerError(undefined);
         setPaired(true);
         setPairing(false);
         setScanning(false);
@@ -469,7 +476,7 @@ export function KhieClientModule({
       >
         <div className={`module-field-wide ${styles["pairing-columns"]}`}>
           <div className={`module-field ${styles["pairing-group"]}`}>
-            <span>To be linked</span>
+            <span>Let a connector scan this</span>
             {relayConnectionFailed ? (
               <button
                 className={styles["relay-retry"]}
@@ -486,12 +493,12 @@ export function KhieClientModule({
                   <QrCode
                     className={styles["endpoint-qr"]}
                     value={pairingEndpoint}
-                    title="Signer pairing endpoint"
+                    title="Wallet pairing code"
                   />
                   <CopyableText
                     className={styles["endpoint-copy"]}
                     value={pairingEndpoint}
-                    ariaLabel="Copy signer pairing endpoint"
+                    ariaLabel="Copy wallet pairing code"
                     iconSize={15}
                     onError={(cause) => reportError(cause, show, log)}
                   >
@@ -502,10 +509,10 @@ export function KhieClientModule({
                 <div className={styles["endpoint-pair"]}>
                   <QrCode
                     className={styles["endpoint-qr"]}
-                    title="Signer pairing endpoint"
+                    title="Wallet pairing code"
                   />
                   <span className={styles["endpoint-pending"]}>
-                    Preparing endpoint…
+                    Preparing pairing code…
                   </span>
                 </div>
               )}
@@ -515,7 +522,7 @@ export function KhieClientModule({
             <span>or</span>
           </div>
           <div className={`module-field ${styles["remote-column"]}`}>
-            <span>To link</span>
+            <span>Scan a connector</span>
             <div className={styles["remote-actions"]}>
               <div className={`module-actions ${styles["scan-action"]}`}>
                 <button
@@ -527,7 +534,7 @@ export function KhieClientModule({
                     <ScanLine aria-hidden="true" size={21} strokeWidth={1.8} />
                   </span>
                   <span className={styles["scan-copy"]}>
-                    <strong>Scan to Khie</strong>
+                    <strong>Scan a connector</strong>
                   </span>
                   <ArrowRight
                     className={styles["scan-arrow"]}
@@ -541,8 +548,8 @@ export function KhieClientModule({
               >
                 <input
                   value={khieEndpoint}
-                  aria-label="Remote endpoint"
-                  placeholder="Or paste endpoint"
+                  aria-label="Connector pairing code"
+                  placeholder="Or paste pairing code"
                   spellCheck={false}
                   onChange={(event) =>
                     setKhieEndpoint(event.currentTarget.value)
@@ -614,6 +621,20 @@ export function KhieClientModule({
             </div>
           ) : null}
         </div>
+        {incompatiblePeerError ? (
+          <div
+            className={`module-field-wide ${styles["compatibility-help"]}`}
+            role="alert"
+          >
+            <strong>This is not a compatible Khie pairing code</strong>
+            <span>
+              Open the app you want to use and click something like
+              &quot;Connect wallet&quot;, then choose Khie in the connector. You
+              can either scan its pairing code with this module, or use the
+              connector to scan the pairing code shown here.
+            </span>
+          </div>
+        ) : null}
       </div>
       {showingPairingOverlay ? (
         <div
@@ -1221,10 +1242,27 @@ function reportError(
   const message =
     cause instanceof Error ? cause.message : "libp2p operation failed";
 
+  if (isIncompatiblePeerError(cause)) {
+    show({
+      label: "INCOMPATIBLE PAIRING CODE",
+      tone: "error",
+      content: <strong>Scan a pairing code from a connector</strong>,
+    });
+    log(message, "error");
+    return;
+  }
+
   show({
     label: "LIBP2P FAULT",
     tone: "error",
     content: <strong>{message}</strong>,
   });
   log(message, "error");
+}
+
+function isIncompatiblePeerError(cause: unknown): cause is Error {
+  return (
+    cause instanceof Libp2p.PairingEndpointRoleError ||
+    (cause instanceof Error && cause.name === "UnsupportedProtocolError")
+  );
 }

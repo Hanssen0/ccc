@@ -5,9 +5,9 @@ import { multiaddr } from "@multiformats/multiaddr";
 import type { ConnectorConnection } from "../../events/external.js";
 import { errorMessage } from "../error.js";
 import {
+  CONNECTOR_ENDPOINT_URL,
   createKhieNode,
   JSON_RPC_PROTOCOL,
-  SIGNER_ENDPOINT_URL,
   type KhieNode,
 } from "./node.js";
 import { khieWalletFrom } from "./wallet.js";
@@ -18,6 +18,7 @@ export type KhieRelayState = "connected" | "connecting" | "failed" | "idle";
 export type KhiePairingSessionState = Readonly<{
   canPair: boolean;
   error?: string;
+  errorKind?: "incompatible-peer";
   ownEndpoint: string;
   phase: KhiePairingPhase;
   relayState: KhieRelayState;
@@ -100,9 +101,22 @@ export class KhiePairingSession {
   }
 
   private beginOperation(
-    patch: Omit<Partial<KhiePairingSessionState>, "error"> = {},
+    patch: Omit<Partial<KhiePairingSessionState>, "error" | "errorKind"> = {},
   ) {
-    this.update({ ...patch, error: undefined });
+    this.update({ ...patch, error: undefined, errorKind: undefined });
+  }
+
+  private updateError(
+    cause: unknown,
+    patch: Omit<Partial<KhiePairingSessionState>, "error" | "errorKind"> = {},
+  ) {
+    this.update({
+      ...patch,
+      error: errorMessage(cause),
+      errorKind: isIncompatiblePeerError(cause)
+        ? "incompatible-peer"
+        : undefined,
+    });
   }
 
   async start(relayAddress: string) {
@@ -129,7 +143,7 @@ export class KhiePairingSession {
       this.observeNode(resources, node);
       await this.connectRelay(relayAddress);
     } catch (cause) {
-      this.update({ error: errorMessage(cause) });
+      this.updateError(cause);
       await this.close();
     }
   }
@@ -156,15 +170,16 @@ export class KhiePairingSession {
       }
 
       void Libp2p.encodePairingEndpoint(
-        SIGNER_ENDPOINT_URL,
+        CONNECTOR_ENDPOINT_URL,
         addresses,
         node.services.pairing.secret,
+        "connector",
       )
         .then((ownEndpoint) => {
           this.update({ ownEndpoint });
         })
         .catch((cause: unknown) => {
-          this.update({ error: errorMessage(cause) });
+          this.updateError(cause);
         });
     };
 
@@ -172,7 +187,7 @@ export class KhiePairingSession {
     resources.nodeSubscriptions.push(
       () => node.removeEventListener("self:peer:update", syncEndpoint),
       node.services.pairing.onError((error) => {
-        this.update({ error: error.message });
+        this.updateError(error);
       }),
       node.services.pairing.onPaired((peerId) => {
         void this.acceptPeer(peerId);
@@ -207,10 +222,7 @@ export class KhiePairingSession {
       resources.relayConnection = connection;
       this.update({ relayState: "connected" });
     } catch (cause) {
-      this.update({
-        error: errorMessage(cause),
-        relayState: "failed",
-      });
+      this.updateError(cause, { relayState: "failed" });
     }
   }
 
@@ -225,13 +237,11 @@ export class KhiePairingSession {
     const signal = resources.abortController.signal;
 
     try {
-      await node.services.pairing.pair(
-        await Libp2p.decodePairingEndpoint(endpoint),
-        { signal },
-      );
+      const target = await Libp2p.decodePairingEndpoint(endpoint, "provider");
+      await node.services.pairing.pair(target, { signal });
       return true;
     } catch (cause) {
-      this.update({ error: errorMessage(cause) });
+      this.updateError(cause);
       return false;
     } finally {
       if (!resources.selectedPeer) {
@@ -264,7 +274,7 @@ export class KhiePairingSession {
       signal.throwIfAborted();
     } catch (cause) {
       resources.selectedPeer = undefined;
-      this.update({ error: errorMessage(cause), phase: "idle" });
+      this.updateError(cause, { phase: "idle" });
       await node.services.pairing.unpair(peerId);
       return;
     }
@@ -367,7 +377,14 @@ export class KhiePairingSession {
         throw cause;
       }
     } catch (cause) {
-      this.update({ error: errorMessage(cause) });
+      this.updateError(cause);
     }
   }
+}
+
+function isIncompatiblePeerError(cause: unknown): cause is Error {
+  return (
+    cause instanceof Libp2p.PairingEndpointRoleError ||
+    (cause instanceof Error && cause.name === "UnsupportedProtocolError")
+  );
 }

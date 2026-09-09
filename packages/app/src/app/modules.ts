@@ -123,7 +123,7 @@ export const demoModules: readonly DemoModule[] = defineModules([
   {
     name: "Khie",
     description:
-      "Khie (契, /kʰje/) is Hakka for bond, agreement, or connection. By scanning the other side, Khie connects applications with wallets peer-to-peer.\nThis module makes any wallet connected through CCC automatically available over Khie.",
+      "Khie is a peer-to-peer protocol that connects wallets and applications. To connect, select Khie in the application's connector, then either use the connector to scan the wallet's pairing code or use the wallet to scan the connector's pairing code. For wallets without native Khie support, this module lets them connect to remote applications through Khie.\n\nKhie (契, /kʰje/) is Hakka for bond, agreement, or connection.",
     group: "Wallet",
     icon: KhieIcon,
     access: "signer",

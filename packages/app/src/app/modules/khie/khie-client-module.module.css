@@ -953,6 +953,24 @@
     monospace;
 }
 
+.compatibility-help {
+  display: grid;
+  padding: 12px 14px;
+  border: 1px solid var(--line-dark);
+  gap: 5px;
+}
+
+.compatibility-help strong {
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.compatibility-help span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .endpoint-copy > span:not(:global(.copyable-text-icon)) {
   flex: 1 1 auto;
   overflow: hidden;

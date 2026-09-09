@@ -4,7 +4,7 @@ import { ensurePromiseWithResolvers } from "./promiseWithResolvers.js";
 
 export const JSON_RPC_PROTOCOL = "/nervos-ckb/khie/json-rpc/0.0.1";
 export const DEFAULT_RELAY_ADDRESS = "/dns4/relay.ckbccc.com/tcp/443/wss";
-export const SIGNER_ENDPOINT_URL = "https://app.ckbccc.com/#khie";
+export const CONNECTOR_ENDPOINT_URL = "https://app.ckbccc.com/#khie";
 
 const PAIRING_PROTOCOL = "/nervos-ckb/khie/pairing/0.0.1";
 const PAIRED_PEER_TIMEOUT_MS = 30 * 60 * 1000;

@@ -6,10 +6,23 @@ import type { PairingTarget } from "./pairingService.js";
 const MAX_DECOMPRESSED_ADDRESSES_LENGTH = 16 * 1024;
 const MAX_ADDRESSES = 16;
 
+export class PairingEndpointRoleError extends Error {
+  constructor(
+    readonly expectedRole: string,
+    readonly actualRole: string | undefined,
+  ) {
+    super(
+      `Expected a ${expectedRole} pairing endpoint, received ${actualRole ? `role "${actualRole}"` : "an endpoint without a role"}`,
+    );
+    this.name = "PairingEndpointRoleError";
+  }
+}
+
 export async function encodePairingEndpoint(
   endpointUrl: string,
   addresses: readonly Multiaddr[],
   secret: string,
+  role?: string,
 ) {
   if (addresses.length === 0) {
     throw new Error("Pairing endpoint requires at least one address");
@@ -37,6 +50,9 @@ export async function encodePairingEndpoint(
 
   params.delete("addresses");
   params.delete("secret");
+  if (role) {
+    params.set("role", role);
+  }
   params.set("addresses", encodedAddresses);
   params.set("secret", secret);
 
@@ -45,9 +61,16 @@ export async function encodePairingEndpoint(
 
 export async function decodePairingEndpoint(
   endpoint: string,
+  expectedRole?: string,
 ): Promise<PairingTarget> {
   const url = new URL(endpoint.trim());
   const params = url.searchParams;
+  if (expectedRole) {
+    const actualRole = params.get("role")?.trim() || undefined;
+    if (actualRole !== expectedRole) {
+      throw new PairingEndpointRoleError(expectedRole, actualRole);
+    }
+  }
   const compressedAddresses = params.get("addresses")?.trim();
   const secret = params.get("secret")?.trim();
 

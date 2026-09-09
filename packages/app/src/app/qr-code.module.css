@@ -52,11 +52,10 @@
   width: 100%;
   height: 100%;
   background: transparent !important;
-  opacity: 0.52;
 }
 
 .image path {
-  fill: var(--muted) !important;
+  fill: var(--ink) !important;
 }
 
 .placeholder {

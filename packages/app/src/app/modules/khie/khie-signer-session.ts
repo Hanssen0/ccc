@@ -123,18 +123,17 @@ export class KhieSignerSession {
     try {
       let target: Libp2p.PairingTarget;
       try {
-        target = await Libp2p.decodePairingEndpoint(address);
+        target = await Libp2p.decodePairingEndpoint(address, "connector");
       } catch (cause) {
         this.events?.onError?.(asError(cause));
         return false;
       }
 
       try {
-        await node.services.pairing.pair(target, {
-          signal,
-        });
+        await node.services.pairing.pair(target, { signal });
         return true;
       } catch {
+        // PairingService reports its own errors through onError.
         return false;
       }
     } finally {
@@ -296,6 +295,7 @@ export class KhieSignerSession {
             this.config.endpointUrl,
             addresses,
             node.services.pairing.secret,
+            "provider",
           );
     this.events?.onEndpointChange?.(endpoint);
   }
