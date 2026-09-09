@@ -4,16 +4,15 @@ import { customElement, property, state } from "lit/decorators.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import {
   ConnectorCloseEvent,
-  ConnectorWillUpdateEvent,
+  ConnectorConnection,
+  ConnectorConnectionEvent,
   SelectClientEvent,
 } from "../events/external.js";
 import {
   CloseRequestEvent,
   ConnectedEvent,
   FeeRateSelectedEvent,
-  KhiePairingConnectedEvent,
 } from "../events/internal.js";
-import { khieWalletFrom } from "../scenes/khie/wallet.js";
 import { SignersController } from "../signers/index.js";
 import { ClientWithFeeRate } from "./client.js";
 
@@ -22,28 +21,26 @@ const SIGNER_REFRESH_PROPERTIES = [
   "icon",
   "client",
   "signersController",
-  "preferredNetworks",
 ] as const satisfies readonly (keyof WebComponentConnector)[];
-
-type KhieConnection = {
-  signer: ccc.SignerJsonRpc;
-  signerInfo: ccc.SignerInfo;
-  wallet: ccc.Wallet;
-};
 
 type ConnectorScene = Element & { close(): void };
 
 @customElement("ccc-connector")
 export class WebComponentConnector extends LitElement {
+  constructor() {
+    super();
+    this.addEventListener(
+      ConnectorConnectionEvent.eventName,
+      this.applyConnectionEvent,
+    );
+  }
+
   @property()
   public hideMark: unknown;
   @property()
   public name?: string;
   @property()
   public icon?: string;
-  /** @deprecated This compatibility property is ignored. */
-  @property()
-  public preferredNetworks?: ccc.NetworkPreference[];
   @property({ attribute: false })
   public signersController = new ccc.SignersController();
   @state()
@@ -67,23 +64,19 @@ export class WebComponentConnector extends LitElement {
   private signerUpdateId = 0;
 
   public disconnect(): void {
-    const signer = this.khieConnection?.signer ?? this.signer?.signer;
-
     this.clearConnection();
-    void signer?.disconnect().catch(() => {});
   }
 
   private clearConnection(): void {
-    this.khieConnection = undefined;
     this.walletName = undefined;
     this.signerName = undefined;
     this.saveConnection();
-    this.setSigner(undefined, undefined);
+    this.dispatchEvent(new ConnectorConnectionEvent());
   }
 
   @state()
   private pairingKhie = false;
-  private khieConnection?: KhieConnection;
+  private connection?: ConnectorConnection;
 
   private loadConnection() {
     const { signerName, walletName } = JSON.parse(
@@ -119,6 +112,15 @@ export class WebComponentConnector extends LitElement {
   }
 
   willUpdate(changedProperties: PropertyValues): void {
+    // Named selections are rebuilt by the controller refresh below. Direct
+    // connections have no lookup key, so changing Client invalidates them.
+    if (
+      changedProperties.has("client") &&
+      this.connection &&
+      (!this.walletName || !this.signerName)
+    ) {
+      this.disconnect();
+    }
     if (
       changedProperties.has("client") &&
       !(this.client instanceof ClientWithFeeRate)
@@ -138,8 +140,6 @@ export class WebComponentConnector extends LitElement {
     ) {
       this.refreshSigner();
     }
-
-    this.dispatchEvent(new ConnectorWillUpdateEvent());
   }
 
   private requestClientWithFeeRate(event?: FeeRateSelectedEvent): void {
@@ -154,8 +154,8 @@ export class WebComponentConnector extends LitElement {
   }
 
   refreshSigner(): void {
-    if (this.khieConnection) {
-      const { signerInfo, wallet } = this.khieConnection;
+    if (!this.walletName || !this.signerName) {
+      const { signerInfo, wallet } = this.connection ?? {};
       void this.updateSigner(wallet, signerInfo);
       return;
     }
@@ -163,22 +163,22 @@ export class WebComponentConnector extends LitElement {
     const wallet = this.signersControllerInner.wallets.find(
       ({ name }) => name === this.walletName,
     );
-    const signer = wallet?.signers.find(({ name }) => name === this.signerName);
-    void this.updateSigner(wallet, signer);
+    const signerInfo = wallet?.signers.find(
+      ({ name }) => name === this.signerName,
+    );
+    void this.updateSigner(wallet, signerInfo);
   }
 
   private async updateSigner(
     wallet: ccc.Wallet | undefined,
     signerInfo: ccc.SignerInfo | undefined,
-  ) {
+  ): Promise<void> {
     const updateId = ++this.signerUpdateId;
+    const signerChanged = signerInfo?.signer !== this.signer?.signer;
 
-    // A DOM detach removes the replacer subscription but keeps the signer, so
-    // an unchanged signer still needs setup when its subscription is missing.
-    if (
-      signerInfo?.signer === this.signer?.signer &&
-      (!signerInfo || this.unsubscribeSigner)
-    ) {
+    // A DOM detach removes the replacer subscription but keeps the borrowed
+    // connection, so an unchanged signer may still need local setup restored.
+    if (!signerChanged && (!signerInfo || this.unsubscribeSigner)) {
       return;
     }
 
@@ -189,23 +189,42 @@ export class WebComponentConnector extends LitElement {
       return;
     }
 
-    if (signerInfo && connected) {
-      this.setSigner(wallet, signerInfo);
-    } else {
-      this.setSigner(undefined, undefined);
+    if (!wallet || !signerInfo || !connected) {
+      if (this.connection) {
+        this.dispatchEvent(new ConnectorConnectionEvent());
+      }
+      return;
     }
+
+    if (!signerChanged) {
+      this.unsubscribeSigner = this.subscribeSigner(signerInfo);
+      return;
+    }
+
+    // The controller only discovers wallets. The Connector owns the selected
+    // names and therefore produces their connection transition.
+    const connection = { wallet, signerInfo };
+    this.dispatchEvent(
+      new ConnectorConnectionEvent(
+        new ccc.OwnerUnique(connection, ({ signerInfo }) =>
+          signerInfo.signer.disconnect(),
+        ),
+      ),
+    );
   }
 
-  private setSigner(
-    wallet: ccc.Wallet | undefined,
-    signer: ccc.SignerInfo | undefined,
-  ): void {
+  private applyConnectionEvent = (event: Event): void => {
+    const { connectionOwner } = event as ConnectorConnectionEvent;
+    const connection = connectionOwner?.value;
     this.signerUpdateId += 1;
     this.unsubscribeFromSigner();
-    this.wallet = wallet;
-    this.signer = signer;
-    this.unsubscribeSigner = signer ? this.subscribeSigner(signer) : undefined;
-  }
+    this.connection = connection;
+    this.wallet = connection?.wallet;
+    this.signer = connection?.signerInfo;
+    this.unsubscribeSigner = connection
+      ? this.subscribeSigner(connection.signerInfo)
+      : undefined;
+  };
 
   private unsubscribeFromSigner(): void {
     this.unsubscribeSigner?.();
@@ -214,35 +233,27 @@ export class WebComponentConnector extends LitElement {
 
   private subscribeSigner(signerInfo: ccc.SignerInfo): () => void {
     const signer = signerInfo.signer;
-    const khieSigner = this.khieConnection?.signer;
-    if (!khieSigner || signer !== khieSigner) {
+    if (this.walletName && this.signerName) {
       return signer.onReplaced(() => {
         void this.signersControllerInner.refresh();
       });
     }
 
-    return khieSigner.onReplaced(() => {
-      if (this.khieConnection?.signer === khieSigner) {
+    return signer.onReplaced(() => {
+      if (this.connection?.signerInfo.signer === signer) {
         this.clearConnection();
       }
     });
   }
 
-  private handleKhieConnected = (event: KhiePairingConnectedEvent) => {
-    event.stopPropagation();
-    const { signer } = event;
-    const wallet = khieWalletFrom(signer);
-    const signerInfo = new ccc.SignerInfo(wallet.name, signer);
-    this.khieConnection = { signer, signerInfo, wallet };
+  private handleKhieConnected = () => {
     this.walletName = undefined;
     this.signerName = undefined;
     this.pairingKhie = false;
     this.saveConnection();
-    this.setSigner(wallet, signerInfo);
   };
 
   private handleConnected = ({ walletName, signerName }: ConnectedEvent) => {
-    this.khieConnection = undefined;
     this.walletName = walletName;
     this.signerName = signerName;
     this.saveConnection();
@@ -294,7 +305,7 @@ export class WebComponentConnector extends LitElement {
                     <ccc-khie-connect-scene
                       .client=${this.client}
                       @back=${() => (this.pairingKhie = false)}
-                      @khie-pairing-connected=${this.handleKhieConnected}
+                      @connection=${this.handleKhieConnected}
                     ></ccc-khie-connect-scene>
                   `
                 : html`

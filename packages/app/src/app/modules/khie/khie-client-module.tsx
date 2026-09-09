@@ -94,7 +94,10 @@ export function KhieClientModule({
         return current;
       }
 
-      setClient(clientForNetworkId(networkId, client));
+      const clientOwner = clientOwnerForNetworkId(networkId, client);
+      if (clientOwner) {
+        setClient(clientOwner);
+      }
 
       return new Promise<ccc.Signer>((resolve, reject) => {
         const waiter: SignerWaiter = {
@@ -1087,16 +1090,16 @@ function formatElapsedDuration(timestamp: number, now: number) {
   return `${days} day${days === 1 ? "" : "s"} ago`;
 }
 
-function clientForNetworkId(networkId: string, current: ccc.Client) {
+function clientOwnerForNetworkId(networkId: string, current: ccc.Client) {
   if (networkIdFromAddressPrefix(current.addressPrefix) === networkId) {
-    return current;
+    return;
   }
 
   if (networkId === "ckb-mainnet") {
-    return new ccc.ClientPublicMainnet();
+    return ccc.ClientPublicMainnet.open();
   }
   if (networkId === "ckb-testnet") {
-    return new ccc.ClientPublicTestnet();
+    return ccc.ClientPublicTestnet.open();
   }
 
   throw new ccc.JsonRpcError({

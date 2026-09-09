@@ -59,7 +59,7 @@ export type SubmitTransaction = (
 export type ModuleRuntimeProps = {
   client: ccc.Client;
   log: (message: string, level?: DemoLogLevel) => void;
-  setClient: (client: ccc.Client) => unknown;
+  setClient: (owner: ccc.Owner<ccc.Client>) => unknown;
   show: ShowModuleReadout;
   signer?: ccc.Signer;
   wallet?: ccc.Wallet;

@@ -6,10 +6,8 @@ import { LEFT_SVG } from "../../assets/left.svg.js";
 import { RETRY_SVG } from "../../assets/retry.svg.js";
 import { SCAN_SVG } from "../../assets/scan.svg.js";
 import type { QrScannedEvent } from "../../components/qr-scanner.js";
-import {
-  CloseRequestEvent,
-  KhiePairingConnectedEvent,
-} from "../../events/internal.js";
+import { ConnectorConnectionEvent } from "../../events/external.js";
+import { CloseRequestEvent } from "../../events/internal.js";
 import { errorMessage } from "../error.js";
 import { DEFAULT_RELAY_ADDRESS } from "./node.js";
 import { KhiePairingSession } from "./session.js";
@@ -39,10 +37,10 @@ export class KhiePairing extends LitElement {
 
     this.session = new KhiePairingSession({
       client: this.client,
-      onConnected: (signer) => {
+      onConnected: (connectionOwner) => {
         this.dispatchEvent(
           new CloseRequestEvent(() => {
-            this.dispatchEvent(new KhiePairingConnectedEvent(signer));
+            this.dispatchEvent(new ConnectorConnectionEvent(connectionOwner));
           }),
         );
       },

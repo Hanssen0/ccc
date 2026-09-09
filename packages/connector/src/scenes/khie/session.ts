@@ -2,6 +2,7 @@ import { ccc } from "@ckb-ccc/ccc";
 import { Libp2p } from "@ckb-ccc/libp2p";
 import type { Connection, PeerId } from "@libp2p/interface";
 import { multiaddr } from "@multiformats/multiaddr";
+import type { ConnectorConnection } from "../../events/external.js";
 import { errorMessage } from "../error.js";
 import {
   createKhieNode,
@@ -9,6 +10,7 @@ import {
   SIGNER_ENDPOINT_URL,
   type KhieNode,
 } from "./node.js";
+import { khieWalletFrom } from "./wallet.js";
 
 export type KhiePairingPhase = "connecting" | "idle" | "pairing";
 export type KhieRelayState = "connected" | "connecting" | "failed" | "idle";
@@ -31,7 +33,7 @@ export const KHIE_PAIRING_SESSION_INITIAL_STATE: KhiePairingSessionState = {
 
 export type KhiePairingSessionConfig = {
   client: ccc.Client;
-  onConnected: (signer: ccc.SignerJsonRpc) => void;
+  onConnected: (connectionOwner: ccc.Owner<ConnectorConnection>) => void;
   onStateChange: () => void;
 };
 
@@ -347,9 +349,23 @@ export class KhiePairingSession {
       signer.onReplaced(() => {
         void connectedOwner.dispose().catch(() => {});
       });
+      const connectionOwner = new ccc.OwnerUnique(signer, (signer) =>
+        signer.disconnect(),
+      ).map((signer) => {
+        const wallet = khieWalletFrom(signer);
+        return {
+          wallet,
+          signerInfo: new ccc.SignerInfo(wallet.name, signer),
+        };
+      });
       resources.pendingSigner = undefined;
       this.resources = undefined;
-      this.onConnected(signer);
+      try {
+        this.onConnected(connectionOwner);
+      } catch (cause) {
+        await connectionOwner.dispose();
+        throw cause;
+      }
     } catch (cause) {
       this.update({ error: errorMessage(cause) });
     }

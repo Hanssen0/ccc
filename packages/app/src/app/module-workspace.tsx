@@ -21,7 +21,7 @@ export const ModuleWorkspace = memo(function ModuleWorkspace({
   client: ccc.Client;
   log: DemoLogger;
   module?: DemoModule;
-  setClient: (client: ccc.Client) => unknown;
+  setClient: (owner: ccc.Owner<ccc.Client>) => unknown;
   signer?: ccc.Signer;
   wallet?: ccc.Wallet;
 }) {
@@ -83,7 +83,7 @@ function MountedModuleWorkspace({
   client: ccc.Client;
   log: DemoLogger;
   module: DemoModule;
-  setClient: (client: ccc.Client) => unknown;
+  setClient: (owner: ccc.Owner<ccc.Client>) => unknown;
   signer?: ccc.Signer;
   wallet?: ccc.Wallet;
   workspaceRef: React.RefObject<HTMLElement | null>;

@@ -9,7 +9,6 @@ export class SignersController {
   constructor(
     private readonly host: ReactiveControllerHost & {
       client: ccc.Client;
-      preferredNetworks?: ccc.NetworkPreference[];
       name?: string;
       icon?: string;
       refreshSigner: () => void;

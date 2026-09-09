@@ -181,8 +181,7 @@ The hook throws if called outside a `<ccc.Provider>` tree.
 
 Clients passed through `defaultClient` or `clientOptions` remain owned by the
 caller. `setClient(owner)` transfers ownership to the Provider, which disposes
-the owner on the next `setClient` call or when the Provider unmounts. Passing a bare `Client` to
-`setClient` remains supported for compatibility, but is deprecated.
+the owner on the next `setClient` call or when the Provider unmounts.
 
 ## `useBorrowedOrOwned()` hook
 
