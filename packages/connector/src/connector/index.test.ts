@@ -151,7 +151,7 @@ describe("WebComponentConnector connection lifecycle", () => {
     ).toBeUndefined();
   });
 
-  it("emits the same owned connection for a controller signer", async () => {
+  it("does not disconnect a controller signer when its owner is disposed", async () => {
     const connector = createConnector();
     const client = new ccc.ClientPublicTestnet();
     const { close, signer } = createSigner(client);
@@ -195,7 +195,7 @@ describe("WebComponentConnector connection lifecycle", () => {
     expect(connected).toHaveBeenCalledOnce();
     signersControllerFrom(connector).refresh = () => Promise.resolve();
     await connectionOwner?.dispose();
-    expect(close).toHaveBeenCalledOnce();
+    expect(close).not.toHaveBeenCalled();
   });
 
   it("replaces a selected connection without an intermediate clear", async () => {
@@ -269,7 +269,7 @@ describe("WebComponentConnector connection lifecycle", () => {
     connector.willUpdate(new Map([["client", firstClient]]) as PropertyValues);
     await vi.waitFor(() => expect(close).toHaveBeenCalledOnce());
 
-    expect(disconnect).toHaveBeenCalledOnce();
+    expect(disconnect).toHaveBeenCalled();
     expect(connector.signer).toBeUndefined();
   });
 

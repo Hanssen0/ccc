@@ -64,7 +64,9 @@ export class WebComponentConnector extends LitElement {
   private signerUpdateId = 0;
 
   public disconnect(): void {
+    const signer = this.signer?.signer;
     this.clearConnection();
+    void signer?.disconnect().catch(() => {});
   }
 
   private clearConnection(): void {
@@ -206,9 +208,9 @@ export class WebComponentConnector extends LitElement {
     const connection = { wallet, signerInfo };
     this.dispatchEvent(
       new ConnectorConnectionEvent(
-        new ccc.OwnerUnique(connection, ({ signerInfo }) =>
-          signerInfo.signer.disconnect(),
-        ),
+        // Controller signers are discovered values. Releasing the selection
+        // must not revoke a wallet session that a later refresh can restore.
+        new ccc.OwnerUnique(connection, () => {}),
       ),
     );
   }
