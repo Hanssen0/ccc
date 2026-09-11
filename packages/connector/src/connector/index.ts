@@ -52,6 +52,10 @@ export class WebComponentConnector extends LitElement {
 
   private signersControllerInner = new SignersController(this);
 
+  private get appName(): string {
+    return this.signersController.getConfig(this).appName;
+  }
+
   @state()
   private walletName?: string;
   @state()
@@ -305,6 +309,7 @@ export class WebComponentConnector extends LitElement {
               : this.pairingKhie
                 ? html`
                     <ccc-khie-connect-scene
+                      .appName=${this.appName}
                       .client=${this.client}
                       @back=${() => (this.pairingKhie = false)}
                       @connection=${this.handleKhieConnected}

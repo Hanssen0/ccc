@@ -151,6 +151,24 @@ describe("WebComponentConnector connection lifecycle", () => {
     ).toBeUndefined();
   });
 
+  it("uses the document title when the application name is not configured", () => {
+    vi.stubGlobal("document", {
+      querySelector: vi.fn((selector: string) =>
+        selector === "head title" ? { text: "Page title" } : null,
+      ),
+    });
+    const connector = createConnector();
+
+    expect((connector as unknown as { appName: string }).appName).toBe(
+      "Page title",
+    );
+
+    connector.name = "Configured name";
+    expect((connector as unknown as { appName: string }).appName).toBe(
+      "Configured name",
+    );
+  });
+
   it("does not disconnect a controller signer when its owner is disposed", async () => {
     const connector = createConnector();
     const client = new ccc.ClientPublicTestnet();

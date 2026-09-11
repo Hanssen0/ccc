@@ -646,7 +646,7 @@
   background: var(--signal);
 }
 
-.peer-id {
+.peer-name {
   overflow: hidden;
   flex: 1 1 auto;
   min-width: 0;
@@ -656,6 +656,10 @@
     monospace;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.peer-id {
+  max-width: 150px;
 }
 
 .peer-time > span {
@@ -684,6 +688,7 @@
   gap: 6px;
 }
 
+.peer-time code,
 .peer-time time,
 .peer-time strong {
   overflow: hidden;

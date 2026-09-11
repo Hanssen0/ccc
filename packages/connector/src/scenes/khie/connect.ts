@@ -10,6 +10,9 @@ type KhieLoadStatus = "loading" | "ready" | "error";
 @customElement("ccc-khie-connect-scene")
 export class KhieConnectScene extends LitElement {
   @property({ attribute: false })
+  public appName?: string;
+
+  @property({ attribute: false })
   public client!: ccc.Client;
 
   @state()
@@ -44,7 +47,10 @@ export class KhieConnectScene extends LitElement {
 
   private renderBody() {
     if (this.status === "ready") {
-      return html`<ccc-khie-pairing .client=${this.client}></ccc-khie-pairing>`;
+      return html`<ccc-khie-pairing
+        .appName=${this.appName}
+        .client=${this.client}
+      ></ccc-khie-pairing>`;
     }
 
     return html`<ccc-connecting

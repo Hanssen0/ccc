@@ -34,6 +34,7 @@ export const KHIE_PAIRING_SESSION_INITIAL_STATE: KhiePairingSessionState = {
 
 export type KhiePairingSessionConfig = {
   client: ccc.Client;
+  name?: string;
   onConnected: (connectionOwner: ccc.Owner<ConnectorConnection>) => void;
   onStateChange: () => void;
 };
@@ -72,6 +73,7 @@ async function releaseResources(resources: KhiePairingSessionResources) {
 
 export class KhiePairingSession {
   private readonly client: ccc.Client;
+  private readonly name?: string;
   private readonly onConnected: KhiePairingSessionConfig["onConnected"];
   private readonly onStateChange: KhiePairingSessionConfig["onStateChange"];
 
@@ -83,6 +85,7 @@ export class KhiePairingSession {
 
   constructor(config: KhiePairingSessionConfig) {
     this.client = config.client;
+    this.name = config.name;
     this.onConnected = config.onConnected;
     this.onStateChange = config.onStateChange;
   }
@@ -136,6 +139,7 @@ export class KhiePairingSession {
       resources.nodeOwner = await createKhieNode(
         () => !signal.aborted && !resources.selectedPeer,
         signal,
+        this.name,
       );
       signal.throwIfAborted();
       const node = resources.nodeOwner.value;

@@ -18,6 +18,8 @@ export type PairingServiceComponents = {
 };
 
 export type PairingServiceConfig = {
+  /** Optional self-reported label shared with the paired peer. */
+  name?: string;
   protocol: string;
   pairedPeerTimeoutMs: number;
 };
@@ -31,16 +33,20 @@ export type PairingGuard<
   Components extends PairingServiceComponents = PairingServiceComponents,
 > = (this: PairingService<Components>, peerId: PeerId) => boolean;
 
-type PairingRequest = { type: "pair"; secret: string } | { type: "unpair" };
+type PairingRequest =
+  { type: "pair"; secret: string; name?: string } | { type: "unpair" };
 
-type PairingResponse = { ok: true } | { ok: false; error: string };
+type PairingResponse =
+  { ok: true; name?: string } | { ok: false; error: string };
 
 export abstract class PairingService<
   Components extends PairingServiceComponents = PairingServiceComponents,
 > {
   readonly secret = createSecret();
   private readonly errorListeners = new Set<(error: Error) => void>();
-  private readonly pairedListeners = new Set<(peerId: PeerId) => void>();
+  private readonly pairedListeners = new Set<
+    (peerId: PeerId, name?: string) => void
+  >();
   private readonly unpairedListeners = new Set<(peerId: PeerId) => void>();
   private readonly pairingTimeouts = new Map<
     string,
@@ -63,7 +69,7 @@ export abstract class PairingService<
     return () => this.errorListeners.delete(listener);
   }
 
-  onPaired(listener: (peerId: PeerId) => void) {
+  onPaired(listener: (peerId: PeerId, name?: string) => void) {
     this.pairedListeners.add(listener);
     return () => this.pairedListeners.delete(listener);
   }
@@ -127,6 +133,7 @@ export abstract class PairingService<
         {
           type: "pair",
           secret: target.secret,
+          name: this.config.name,
         },
         options,
       );
@@ -138,7 +145,7 @@ export abstract class PairingService<
       }
 
       if (addedPeer) {
-        this.notifyPairedPeer(addedPeer);
+        this.notifyPairedPeer(addedPeer, response.name);
       }
       return opened.connection.remotePeer;
     } catch (cause) {
@@ -205,9 +212,12 @@ export abstract class PairingService<
       if (this.addPairedPeer(connection.remotePeer)) {
         addedPeer = connection.remotePeer;
       }
-      await writeResponse(pairingStream, stream, { ok: true });
+      await writeResponse(pairingStream, stream, {
+        ok: true,
+        name: this.config.name,
+      });
       if (addedPeer) {
-        this.notifyPairedPeer(addedPeer);
+        this.notifyPairedPeer(addedPeer, request.name);
       }
     } catch (cause) {
       if (addedPeer) {
@@ -228,8 +238,8 @@ export abstract class PairingService<
     return timeout === undefined;
   }
 
-  private notifyPairedPeer(peerId: PeerId) {
-    this.pairedListeners.forEach((listener) => listener(peerId));
+  private notifyPairedPeer(peerId: PeerId, name?: string) {
+    this.pairedListeners.forEach((listener) => listener(peerId, name));
   }
 
   private removePairedPeer(peerId: PeerId, notify = true) {
@@ -338,7 +348,11 @@ function parsePairingRequest(data: Uint8Array): PairingRequest {
     typeof request.secret === "string" &&
     request.secret
   ) {
-    return { type: "pair", secret: request.secret };
+    return {
+      type: "pair",
+      secret: request.secret,
+      name: typeof request.name === "string" ? request.name : undefined,
+    };
   }
 
   if (request.type === "unpair") {
@@ -353,7 +367,10 @@ function parsePairingResponse(data: Uint8Array): PairingResponse {
     ccc.bytesTo(data, "utf8"),
   ) as Partial<PairingResponse>;
   if (response.ok === true) {
-    return { ok: true };
+    return {
+      ok: true,
+      name: typeof response.name === "string" ? response.name : undefined,
+    };
   }
   if (response.ok === false && typeof response.error === "string") {
     return { ok: false, error: response.error };

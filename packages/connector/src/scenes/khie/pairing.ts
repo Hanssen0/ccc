@@ -16,6 +16,9 @@ import { KHIE_WALLET_NAME, khieSignerIcon } from "./wallet.js";
 @customElement("ccc-khie-pairing")
 export class KhiePairing extends LitElement {
   @property({ attribute: false })
+  public appName?: string;
+
+  @property({ attribute: false })
   public client!: ccc.Client;
 
   @state()
@@ -36,6 +39,7 @@ export class KhiePairing extends LitElement {
     this.localError = undefined;
 
     this.session = new KhiePairingSession({
+      name: this.appName,
       client: this.client,
       onConnected: (connectionOwner) => {
         this.dispatchEvent(

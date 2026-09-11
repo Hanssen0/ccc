@@ -27,6 +27,7 @@ type KhieSignerSessionResources = {
   nodeSubscriptions: Array<() => void>;
   pairingController?: AbortController;
   pairedPeer?: PeerId;
+  pairedPeerName?: string;
   relayConnection?: Connection;
 };
 
@@ -48,6 +49,7 @@ export type KhieRemotePeer = {
   direct?: boolean;
   id: string;
   lastRequestAt?: number;
+  name?: string;
 };
 
 export const DEFAULT_KHIE_RELAY_ADDRESS = "/dns4/relay.ckbccc.com/tcp/443/wss";
@@ -213,12 +215,13 @@ export class KhieSignerSession {
       node.services.jsonRpc.onError((error) => {
         this.events?.onError?.(error);
       }),
-      node.services.pairing.onPaired((peerId) => {
+      node.services.pairing.onPaired((peerId, name) => {
         if (this.resources.pairedPeer) {
           return;
         }
 
         this.resources.pairedPeer = peerId;
+        this.resources.pairedPeerName = name;
         this.events?.onPaired?.();
         void this.syncRemotePeer(node, peerId);
       }),
@@ -228,6 +231,7 @@ export class KhieSignerSession {
         }
 
         this.resources.pairedPeer = undefined;
+        this.resources.pairedPeerName = undefined;
         this.events?.onUnpaired?.();
       }),
     );
@@ -283,6 +287,7 @@ export class KhieSignerSession {
         lastRequest?.peerId.equals(peerId) === true
           ? lastRequest.at
           : undefined,
+      name: this.resources.pairedPeerName,
     });
   }
 

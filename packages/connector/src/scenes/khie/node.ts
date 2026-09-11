@@ -9,7 +9,11 @@ export const CONNECTOR_ENDPOINT_URL = "https://app.ckbccc.com/#khie";
 const PAIRING_PROTOCOL = "/nervos-ckb/khie/pairing/0.0.1";
 const PAIRED_PEER_TIMEOUT_MS = 30 * 60 * 1000;
 
-async function createNode(canPair: Libp2p.PairingGuard, signal: AbortSignal) {
+async function createNode(
+  canPair: Libp2p.PairingGuard,
+  signal: AbortSignal,
+  name?: string,
+) {
   signal.throwIfAborted();
   await ensurePromiseWithResolvers();
   signal.throwIfAborted();
@@ -44,6 +48,7 @@ async function createNode(canPair: Libp2p.PairingGuard, signal: AbortSignal) {
       identify: identify(),
       pairing: Libp2p.pairingService(
         {
+          name,
           protocol: PAIRING_PROTOCOL,
           pairedPeerTimeoutMs: PAIRED_PEER_TIMEOUT_MS,
         },
@@ -58,10 +63,11 @@ export type KhieNode = Awaited<ReturnType<typeof createNode>>;
 export async function createKhieNode(
   canPair: Libp2p.PairingGuard,
   signal: AbortSignal,
+  name?: string,
 ) {
   let node: KhieNode | undefined;
   try {
-    node = await createNode(canPair, signal);
+    node = await createNode(canPair, signal, name);
     signal.throwIfAborted();
     return new ccc.OwnerUnique(node, (node) => node.stop());
   } catch (cause) {

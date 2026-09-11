@@ -21,6 +21,7 @@ import {
   type KhieRemotePeer,
   KhieSignerSession,
 } from "./khie-signer-session";
+import { displayPeerName } from "./peer-name";
 
 type SignerWaiter = {
   abort: () => void;
@@ -327,7 +328,7 @@ export function KhieClientModule({
           tone: "success",
           content: <strong>Khie peer connected</strong>,
         });
-        logCurrent("Khie peer connected", "success");
+        logCurrent("Khie peer paired", "success");
       },
       onRemotePeerChange: setRemotePeer,
       onReady: (session) => {
@@ -687,6 +688,7 @@ function RemotePeerDetails({
   const connectedAt = peer?.connectedAt
     ? new Date(peer.connectedAt)
     : undefined;
+  const name = displayPeerName(peer?.name);
 
   return (
     <section className={styles["peer-details"]}>
@@ -697,9 +699,9 @@ function RemotePeerDetails({
               <span className={styles["peer-path"]} data-direct={peer.direct}>
                 {path}
               </span>
-              <code className={styles["peer-id"]} title={peer.id}>
-                {peer.id}
-              </code>
+              <bdi className={styles["peer-name"]} dir="auto" title={name}>
+                {name}
+              </bdi>
             </div>
             <span className={styles["peer-agent"]} title={peer.agentVersion}>
               {peer.agentVersion ?? "Unknown agent"}
@@ -717,6 +719,12 @@ function RemotePeerDetails({
 
       {peer ? (
         <div className={styles["peer-times"]}>
+          <div className={styles["peer-time"]}>
+            <span>Peer ID</span>
+            <code className={styles["peer-id"]} title={peer.id}>
+              {peer.id}
+            </code>
+          </div>
           <div className={styles["peer-time"]}>
             <span>Connected</span>
             {connectedAt ? (
