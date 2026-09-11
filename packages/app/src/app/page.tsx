@@ -88,7 +88,9 @@ export default function Home() {
 
   useEffect(() => {
     const selectModuleFromAnchor = () => {
-      const id = window.location.hash.slice(1);
+      const fragment = window.location.hash.slice(1);
+      const separator = fragment.indexOf("?");
+      const id = separator === -1 ? fragment : fragment.slice(0, separator);
       setSelectedModule(demoModules.find((module) => module.id === id));
     };
 

@@ -1,5 +1,5 @@
 import { ccc } from "@ckb-ccc/core";
-import { multiaddr } from "@multiformats/multiaddr";
+import { multiaddr, type Multiaddr } from "@multiformats/multiaddr";
 import * as lp from "it-length-prefixed";
 import { describe, expect, it } from "vitest";
 import {
@@ -28,24 +28,40 @@ async function compress(bytes: Uint8Array) {
 
 function endpointFromCompressedAddresses(bytes: Uint8Array) {
   const url = new URL("https://app.ckbccc.com/#signer");
-  url.searchParams.set("addresses", ccc.bytesTo(bytes, "base64url"));
-  url.searchParams.set("secret", "pairing-secret");
+  const params = new URLSearchParams({
+    addresses: ccc.bytesTo(bytes, "base64url"),
+    secret: "pairing-secret",
+  });
+  url.hash = `signer?${params.toString()}`;
   return url.toString();
 }
 
+function fragmentParams(url: URL) {
+  const separator = url.hash.indexOf("?");
+  return {
+    params: new URLSearchParams(url.hash.slice(separator + 1)),
+    route: url.hash.slice(1, separator),
+  };
+}
+
 describe("pairing endpoint", () => {
-  it("deflate-compresses addresses into one URL parameter", async () => {
+  it("encodes pairing parameters in the URL fragment", async () => {
     const endpoint = await encodePairingEndpoint(
-      "https://app.ckbccc.com/#signer",
+      "https://app.ckbccc.com/?theme=dark&secret=old#signer?source=qr",
       addresses,
       "pairing-secret",
       "provider",
     );
     const url = new URL(endpoint);
+    const { params, route } = fragmentParams(url);
 
-    expect(url.searchParams.get("role")).toBe("provider");
-    expect(url.searchParams.get("addresses")).toMatch(/^[\w-]+$/);
-    expect(url.searchParams.has("addr")).toBe(false);
+    expect(url.searchParams.toString()).toBe("theme=dark&secret=old");
+    expect(route).toBe("signer");
+    expect(params.get("source")).toBe("qr");
+    expect(params.get("role")).toBe("provider");
+    expect(params.get("addresses")).toMatch(/^[\w-]+$/);
+    expect(params.get("secret")).toBe("pairing-secret");
+    expect(params.has("addr")).toBe(false);
     await expect(
       decodePairingEndpoint(endpoint, "provider"),
     ).resolves.toMatchObject({
@@ -67,7 +83,9 @@ describe("pairing endpoint", () => {
     ).rejects.toBeInstanceOf(PairingEndpointRoleError);
 
     const url = new URL(endpoint);
-    url.searchParams.delete("role");
+    const { params, route } = fragmentParams(url);
+    params.delete("role");
+    url.hash = `${route}?${params.toString()}`;
     await expect(
       decodePairingEndpoint(url.toString(), "provider"),
     ).rejects.toMatchObject({
@@ -76,11 +94,9 @@ describe("pairing endpoint", () => {
     });
   });
 
-  it("rejects legacy repeated addr parameters", async () => {
+  it("rejects pairing parameters outside the fragment", async () => {
     const url = new URL("https://app.ckbccc.com/#signer");
-    addresses.forEach((address) =>
-      url.searchParams.append("addr", address.toString()),
-    );
+    url.searchParams.set("addresses", "ignored");
     url.searchParams.set("secret", "pairing-secret");
 
     await expect(decodePairingEndpoint(url.toString())).rejects.toThrow(
@@ -91,7 +107,7 @@ describe("pairing endpoint", () => {
   it("rejects invalid compressed addresses", async () => {
     await expect(
       decodePairingEndpoint(
-        "https://app.ckbccc.com/?addresses=invalid&secret=pairing-secret#signer",
+        "https://app.ckbccc.com/#signer?addresses=invalid&secret=pairing-secret",
       ),
     ).rejects.toThrow("Pairing endpoint contains invalid compressed addresses");
   });
@@ -116,12 +132,16 @@ describe("pairing endpoint", () => {
       ),
     ).rejects.toThrow("Pairing endpoint supports at most 16 addresses");
 
-    const encoded = ccc.bytesConcat(
-      ...lp.encode(tooManyAddresses.map((address) => address.bytes)),
-    );
+    const encoded = encodeAddressesForTest(tooManyAddresses);
     const compressed = await compress(encoded);
     await expect(
       decodePairingEndpoint(endpointFromCompressedAddresses(compressed)),
     ).rejects.toMatchObject({ cause: { message: "Too many addresses" } });
   });
 });
+
+function encodeAddressesForTest(addresses: readonly Multiaddr[]) {
+  return ccc.bytesConcat(
+    ...lp.encode(addresses.map((address) => address.bytes)),
+  );
+}

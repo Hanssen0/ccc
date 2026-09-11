@@ -5,6 +5,7 @@ import type { PairingTarget } from "./pairingService.js";
 
 const MAX_DECOMPRESSED_ADDRESSES_LENGTH = 16 * 1024;
 const MAX_ADDRESSES = 16;
+const PAIRING_PARAMETER_NAMES = ["addresses", "role", "secret"] as const;
 
 export class PairingEndpointRoleError extends Error {
   constructor(
@@ -46,15 +47,17 @@ export async function encodePairingEndpoint(
   const encodedAddresses = ccc.bytesTo(compressedAddressBytes, "base64url");
 
   const url = new URL(endpointUrl);
-  const params = url.searchParams;
+  const { params, route } = fragmentParameters(url);
 
-  params.delete("addresses");
-  params.delete("secret");
+  PAIRING_PARAMETER_NAMES.forEach((name) => {
+    params.delete(name);
+  });
   if (role) {
     params.set("role", role);
   }
   params.set("addresses", encodedAddresses);
   params.set("secret", secret);
+  url.hash = `${route}?${params.toString()}`;
 
   return url.toString();
 }
@@ -64,7 +67,7 @@ export async function decodePairingEndpoint(
   expectedRole?: string,
 ): Promise<PairingTarget> {
   const url = new URL(endpoint.trim());
-  const params = url.searchParams;
+  const { params } = fragmentParameters(url);
   if (expectedRole) {
     const actualRole = params.get("role")?.trim() || undefined;
     if (actualRole !== expectedRole) {
@@ -81,6 +84,19 @@ export async function decodePairingEndpoint(
   const addresses = await decodeCompressedAddresses(compressedAddresses);
 
   return { addresses, secret };
+}
+
+function fragmentParameters(url: URL) {
+  const fragment = url.hash.slice(1);
+  const separator = fragment.indexOf("?");
+  if (separator === -1) {
+    return { params: new URLSearchParams(), route: fragment };
+  }
+
+  return {
+    params: new URLSearchParams(fragment.slice(separator + 1)),
+    route: fragment.slice(0, separator),
+  };
 }
 
 function encodeAddresses(addresses: readonly Multiaddr[]): Uint8Array {
