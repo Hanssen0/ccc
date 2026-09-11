@@ -563,7 +563,7 @@ export function KhieClientModule({
             <span>or</span>
           </div>
           <div className={`module-field ${styles["remote-column"]}`}>
-            <span>Scan a connector</span>
+            <span>Scan connector code</span>
             <div className={styles["remote-actions"]}>
               <div className={`module-actions ${styles["scan-action"]}`}>
                 <button
@@ -575,7 +575,7 @@ export function KhieClientModule({
                     <ScanLine aria-hidden="true" size={21} strokeWidth={1.8} />
                   </span>
                   <span className={styles["scan-copy"]}>
-                    <strong>Scan a connector</strong>
+                    <strong>Scan connector code</strong>
                   </span>
                   <ArrowRight
                     className={styles["scan-arrow"]}

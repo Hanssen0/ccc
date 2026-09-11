@@ -195,10 +195,10 @@ export class KhiePairing extends LitElement {
         <div class="divider" aria-hidden="true"><span>or</span></div>
 
         <section class="field pairing-side remote-side">
-          <label>Scan a wallet</label>
+          <label>Scan wallet code</label>
           <div class="remote-actions">
             <ccc-button @click=${() => this.startScanner()}>
-              ${SCAN_SVG} Scan a wallet
+              ${SCAN_SVG} Scan wallet code
             </ccc-button>
             <div class="endpoint-control">
               <ccc-input
