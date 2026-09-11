@@ -48,7 +48,12 @@ export class KhiePairing extends LitElement {
           }),
         );
       },
-      onStateChange: () => this.requestUpdate(),
+      onStateChange: () => {
+        if (this.session.state.phase !== "idle") {
+          this.localError = undefined;
+        }
+        this.requestUpdate();
+      },
     });
     void this.session.start(this.relayAddress.trim());
   }

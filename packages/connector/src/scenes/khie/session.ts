@@ -316,6 +316,12 @@ export class KhiePairingSession {
         return;
       }
 
+      if (this.resources?.pendingSigner?.signer === signer) {
+        this.updateError(
+          new Error("The wallet unpaired. Go back and pair again."),
+          { signer: undefined },
+        );
+      }
       signer.replace();
       void this.close();
     });

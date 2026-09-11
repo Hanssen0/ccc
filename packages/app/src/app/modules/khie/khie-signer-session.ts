@@ -20,6 +20,54 @@ type KhieSignerServices = {
 type KhieSignerNode = Awaited<ReturnType<typeof createKhieSignerNode>>;
 type KhieSignerJsonRpcHandler = (payload: ccc.JsonRpcPayload) => unknown;
 
+class KhieConnectionAuthorizer {
+  private readonly connections = new Map<
+    string,
+    { status: "connected" } | { status: "connecting" }
+  >();
+
+  async handle(
+    peerId: PeerId,
+    payload: ccc.JsonRpcPayload,
+    handler: KhieSignerJsonRpcHandler,
+  ) {
+    const peer = peerId.toString();
+    // SignerJsonRpc reads metadata before it sends the connect request.
+    if (payload.method === "get_info") {
+      return handler(payload);
+    }
+
+    if (payload.method !== "connect") {
+      if (this.connections.get(peer)?.status !== "connected") {
+        throw new ccc.JsonRpcError({
+          code: -32001,
+          message: "Connect must be approved before this request",
+        });
+      }
+      return handler(payload);
+    }
+
+    const connecting = { status: "connecting" } as const;
+    this.connections.set(peer, connecting);
+    try {
+      const result = await handler(payload);
+      // A later connect attempt or unpair invalidates this completion.
+      if (this.connections.get(peer) === connecting) {
+        this.connections.set(peer, { status: "connected" });
+      }
+      return result;
+    } finally {
+      if (this.connections.get(peer) === connecting) {
+        this.connections.delete(peer);
+      }
+    }
+  }
+
+  unpair(peerId: PeerId) {
+    this.connections.delete(peerId.toString());
+  }
+}
+
 type KhieSignerSessionResources = {
   abortController: AbortController;
   lastRequest?: { at: number; peerId: PeerId };
@@ -338,6 +386,7 @@ async function createKhieSignerNode(
   signal: AbortSignal,
 ) {
   signal.throwIfAborted();
+  const connectionAuthorizer = new KhieConnectionAuthorizer();
 
   const [
     { noise },
@@ -385,10 +434,17 @@ async function createKhieSignerNode(
 
             pairing.refresh(request.peerId);
             onRequest(request.peerId);
-            return handler(request.payload);
+            return connectionAuthorizer.handle(
+              request.peerId,
+              request.payload,
+              handler,
+            );
           },
         ),
       },
+    });
+    node.services.pairing.onUnpaired((peerId) => {
+      connectionAuthorizer.unpair(peerId);
     });
     signal.throwIfAborted();
     return node;
