@@ -221,6 +221,9 @@ export class WebComponentConnector extends LitElement {
 
   private applyConnectionEvent = (event: Event): void => {
     const { connectionOwner } = event as ConnectorConnectionEvent;
+    if (connectionOwner && !connectionOwner.isValid) {
+      return;
+    }
     const connection = connectionOwner?.value;
     this.signerUpdateId += 1;
     this.unsubscribeFromSigner();

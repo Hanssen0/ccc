@@ -119,6 +119,9 @@ export function Provider({
 
   const onConnection = useCallback((event: ccc.ConnectorConnectionEvent) => {
     event.stopPropagation();
+    if (event.connectionOwner && !event.connectionOwner.isValid) {
+      return;
+    }
     const owner = event.connectionOwner?.map((connection) => connection);
     const previous = connectionOwner.current;
     connectionOwner.current = owner;

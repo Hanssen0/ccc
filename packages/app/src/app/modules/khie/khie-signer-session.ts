@@ -220,6 +220,7 @@ export class KhieSignerSession {
     try {
       const node = await createKhieSignerNode(
         () => !abortController.signal.aborted && !this.resources.pairedPeer,
+        (peerId) => this.resources.pairedPeer?.equals(peerId) === true,
         this.config.handler,
         (peerId) => this.recordRequest(peerId),
         this.config.pairedPeerTimeoutMs ?? DEFAULT_PAIRED_PEER_TIMEOUT_MS,
@@ -386,6 +387,7 @@ export class KhieSignerSession {
 
 async function createKhieSignerNode(
   canPair: Libp2p.PairingGuard,
+  isSelectedPeer: (peerId: PeerId) => boolean,
   handler: KhieSignerJsonRpcHandler,
   onRequest: (peerId: PeerId) => void,
   pairedPeerTimeoutMs: number,
@@ -431,7 +433,10 @@ async function createKhieSignerNode(
           { protocol: KHIE_JSON_RPC_PROTOCOL },
           function (request) {
             const { pairing } = this.components;
-            if (!pairing.isPaired(request.peerId)) {
+            if (
+              !pairing.isPaired(request.peerId) ||
+              !isSelectedPeer(request.peerId)
+            ) {
               throw new ccc.JsonRpcError({
                 code: -32000,
                 message: "Peer is not paired for Khie access",

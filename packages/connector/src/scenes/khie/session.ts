@@ -375,9 +375,6 @@ export class KhiePairingSession {
         },
       );
 
-      signer.onReplaced(() => {
-        void connectedOwner.dispose().catch(() => {});
-      });
       const connectionOwner = new ccc.OwnerUnique(signer, (signer) =>
         signer.disconnect(),
       ).map((signer) => {
@@ -386,6 +383,10 @@ export class KhiePairingSession {
           wallet,
           signerInfo: new ccc.SignerInfo(wallet.name, signer),
         };
+      });
+      signer.onReplaced(() => {
+        void connectionOwner.dispose().catch(() => {});
+        void connectedOwner.dispose().catch(() => {});
       });
       resources.pendingSigner = undefined;
       this.resources = undefined;

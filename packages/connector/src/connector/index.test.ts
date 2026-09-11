@@ -49,6 +49,12 @@ function connectKhie(
     (event: Event) => {
       const connectedEvent = event as ConnectorConnectionEvent;
       connectedEvent.stopPropagation();
+      if (
+        connectedEvent.connectionOwner &&
+        !connectedEvent.connectionOwner.isValid
+      ) {
+        return;
+      }
       const owner = connectedEvent.connectionOwner?.map(
         (connection) => connection,
       );
@@ -272,6 +278,48 @@ describe("WebComponentConnector connection lifecycle", () => {
     );
 
     expect(connector.signer).toBeUndefined();
+  });
+
+  it("ignores a connection event whose ownership is no longer active", async () => {
+    const connector = createConnector();
+    const client = new ccc.ClientPublicTestnet();
+    const current = createSigner(client);
+    const stale = createSigner(client);
+    connector.client = client;
+    const currentOwner = connectKhie(connector, current.signer);
+    const wallet = { icon: "", name: "Khie" };
+    const staleOwner = new ccc.OwnerUnique(
+      {
+        signerInfo: new ccc.SignerInfo(wallet.name, stale.signer),
+        wallet,
+      },
+      ({ signerInfo }) => signerInfo.signer.disconnect(),
+    );
+    await staleOwner.dispose();
+
+    connector.dispatchEvent(new ConnectorConnectionEvent(staleOwner));
+
+    expect(connector.signer?.signer).toBe(current.signer);
+    await currentOwner.dispose();
+  });
+
+  it("runs a delayed transition after cleaning up its scene", () => {
+    vi.useFakeTimers();
+    try {
+      const connector = createConnector();
+      const order: string[] = [];
+      connector.addEventListener("close", () => order.push("close"));
+      (connector as unknown as { backToHome(): void }).backToHome = () =>
+        order.push("cleanup");
+
+      connector.close(() => order.push("transition"));
+      expect(order).toEqual([]);
+      vi.advanceTimersByTime(150);
+
+      expect(order).toEqual(["close", "cleanup", "transition"]);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("disconnects the Khie signer when the Client changes", async () => {

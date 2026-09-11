@@ -45,6 +45,11 @@ export abstract class Owner<T> {
   private readonly [ownerId] = true;
   private disposing?: Promise<void>;
 
+  /** Whether this ownership claim has not been moved or disposed. */
+  get isValid(): boolean {
+    return this.disposing === undefined;
+  }
+
   /** Returns whether a value implements CCC Owner semantics. */
   static is(value: unknown): value is Owner<unknown> {
     return (

@@ -18,8 +18,11 @@ describe("Owner", () => {
     const dispose = vi.fn();
     const source = new OwnerUnique("value", dispose);
 
+    expect(source.isValid).toBe(true);
     const mapped = source.map((value) => ({ value }));
 
+    expect(source.isValid).toBe(false);
+    expect(mapped.isValid).toBe(true);
     expect(mapped.value).toEqual({ value: "value" });
     expect(() => source.value).toThrow(
       "Cannot access a moved or disposed Owner",
@@ -27,7 +30,9 @@ describe("Owner", () => {
     await source.dispose();
     expect(dispose).not.toHaveBeenCalled();
 
-    await mapped.dispose();
+    const disposing = mapped.dispose();
+    expect(mapped.isValid).toBe(false);
+    await disposing;
     expect(dispose).toHaveBeenCalledOnce();
     expect(dispose).toHaveBeenCalledWith("value");
   });

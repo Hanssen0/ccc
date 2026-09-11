@@ -44,7 +44,14 @@ export class KhiePairing extends LitElement {
       onConnected: (connectionOwner) => {
         this.dispatchEvent(
           new CloseRequestEvent(() => {
-            this.dispatchEvent(new ConnectorConnectionEvent(connectionOwner));
+            if (!connectionOwner.isValid) {
+              return;
+            }
+            try {
+              this.dispatchEvent(new ConnectorConnectionEvent(connectionOwner));
+            } finally {
+              void connectionOwner.dispose().catch(() => {});
+            }
           }),
         );
       },
