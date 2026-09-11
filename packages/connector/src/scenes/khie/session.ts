@@ -166,7 +166,9 @@ export class KhiePairingSession {
   }
 
   private observeNode(resources: KhiePairingSessionResources, node: KhieNode) {
+    let endpointUpdateId = 0;
     const syncEndpoint = () => {
+      const updateId = ++endpointUpdateId;
       const addresses = node.getMultiaddrs();
       if (addresses.length === 0) {
         this.update({ ownEndpoint: "" });
@@ -180,9 +182,15 @@ export class KhiePairingSession {
         "connector",
       )
         .then((ownEndpoint) => {
+          if (updateId !== endpointUpdateId) {
+            return;
+          }
           this.update({ ownEndpoint });
         })
         .catch((cause: unknown) => {
+          if (updateId !== endpointUpdateId) {
+            return;
+          }
           this.updateError(cause);
         });
     };
@@ -190,6 +198,7 @@ export class KhiePairingSession {
     node.addEventListener("self:peer:update", syncEndpoint);
     resources.nodeSubscriptions.push(
       () => node.removeEventListener("self:peer:update", syncEndpoint),
+      node.services.pairing.onSecretChanged(syncEndpoint),
       node.services.pairing.onError((error) => {
         this.updateError(error);
       }),

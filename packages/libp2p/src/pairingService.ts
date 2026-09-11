@@ -42,12 +42,13 @@ type PairingResponse =
 export abstract class PairingService<
   Components extends PairingServiceComponents = PairingServiceComponents,
 > {
-  readonly secret = createSecret();
+  private currentSecret = createSecret();
   private readonly errorListeners = new Set<(error: Error) => void>();
   private readonly pairedListeners = new Set<
     (peerId: PeerId, name?: string) => void
   >();
   private readonly unpairedListeners = new Set<(peerId: PeerId) => void>();
+  private readonly secretChangedListeners = new Set<(secret: string) => void>();
   private readonly pairingTimeouts = new Map<
     string,
     ReturnType<typeof setTimeout>
@@ -64,6 +65,11 @@ export abstract class PairingService<
 
   protected abstract canPair(peerId: PeerId): boolean;
 
+  /** The credential to include in the currently issued pairing endpoint. */
+  get secret() {
+    return this.currentSecret;
+  }
+
   onError(listener: (error: Error) => void) {
     this.errorListeners.add(listener);
     return () => this.errorListeners.delete(listener);
@@ -77,6 +83,11 @@ export abstract class PairingService<
   onUnpaired(listener: (peerId: PeerId) => void) {
     this.unpairedListeners.add(listener);
     return () => this.unpairedListeners.delete(listener);
+  }
+
+  onSecretChanged(listener: (secret: string) => void) {
+    this.secretChangedListeners.add(listener);
+    return () => this.secretChangedListeners.delete(listener);
   }
 
   async start() {
@@ -145,6 +156,7 @@ export abstract class PairingService<
       }
 
       if (addedPeer) {
+        this.rotateSecret();
         this.notifyPairedPeer(addedPeer, response.name);
       }
       return opened.connection.remotePeer;
@@ -209,6 +221,10 @@ export abstract class PairingService<
         return;
       }
 
+      // Consume the credential before the next asynchronous boundary so two
+      // concurrent requests cannot both pair with the same endpoint.
+      this.rotateSecret();
+
       if (this.addPairedPeer(connection.remotePeer)) {
         addedPeer = connection.remotePeer;
       }
@@ -240,6 +256,13 @@ export abstract class PairingService<
 
   private notifyPairedPeer(peerId: PeerId, name?: string) {
     this.pairedListeners.forEach((listener) => listener(peerId, name));
+  }
+
+  private rotateSecret() {
+    this.currentSecret = createSecret();
+    this.secretChangedListeners.forEach((listener) =>
+      listener(this.currentSecret),
+    );
   }
 
   private removePairedPeer(peerId: PeerId, notify = true) {

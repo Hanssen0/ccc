@@ -112,6 +112,7 @@ export class KhieSignerSession {
     nodeSubscriptions: [],
   };
   private events?: KhieSignerSessionConfig;
+  private endpointUpdateId = 0;
 
   private constructor(private readonly config: KhieSignerSessionConfig) {
     this.events = config;
@@ -252,6 +253,7 @@ export class KhieSignerSession {
     this.resources.nodeSubscriptions.push(
       () => node.removeEventListener("self:peer:update", syncEndpoint),
       () => node.removeEventListener("peer:identify", syncIdentifiedPeer),
+      node.services.pairing.onSecretChanged(syncEndpoint),
       node.services.pairing.onError((error) => {
         const signal = this.resources.pairingController?.signal;
         if (signal?.aborted && error === signal.reason) {
@@ -340,6 +342,7 @@ export class KhieSignerSession {
   }
 
   private async syncEndpoint(node: KhieSignerNode) {
+    const updateId = ++this.endpointUpdateId;
     const addresses = node.getMultiaddrs();
     const endpoint =
       addresses.length === 0
@@ -350,6 +353,9 @@ export class KhieSignerSession {
             node.services.pairing.secret,
             "provider",
           );
+    if (updateId !== this.endpointUpdateId) {
+      return;
+    }
     this.events?.onEndpointChange?.(endpoint);
   }
 
