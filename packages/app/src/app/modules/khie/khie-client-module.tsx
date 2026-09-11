@@ -39,6 +39,7 @@ type RelayState = "connected" | "connecting" | "failed" | "idle";
 
 const PROVIDER_ENDPOINT_URL = "https://app.ckbccc.com/#khie";
 const JSON_RPC_REQUEST_TIMEOUT_MS = 120_000;
+const APPROVAL_ENABLE_DELAY_MS = 1_000;
 
 export function KhieClientModule({
   client,
@@ -64,6 +65,7 @@ export function KhieClientModule({
   const [scanning, setScanning] = useState(false);
   const [advancedSettingsOpen, setAdvancedSettingsOpen] = useState(false);
   const [approval, setApproval] = useState<ApprovalPrompt>();
+  const [approvalEnabled, setApprovalEnabled] = useState(false);
   const [queuedApprovalCount, setQueuedApprovalCount] = useState(0);
   const [remotePeer, setRemotePeer] = useState<KhieRemotePeer>();
   const [incompatiblePeerError, setIncompatiblePeerError] = useState<string>();
@@ -71,6 +73,7 @@ export function KhieClientModule({
   const signerRef = useRef(signer);
   const signerWaiters = useRef(new Set<SignerWaiter>());
   const approvalRef = useRef<ApprovalPrompt>(undefined);
+  const approvalEnabledRef = useRef(false);
   const approvalQueue = useRef<ApprovalPrompt[]>([]);
 
   const connectingRelay = relayState === "connecting";
@@ -132,6 +135,8 @@ export function KhieClientModule({
   const settleApproval = useCallback(
     (prompt: ApprovalPrompt, approved: boolean) => {
       if (approvalRef.current === prompt) {
+        approvalEnabledRef.current = false;
+        setApprovalEnabled(false);
         const next = approvalQueue.current.shift();
         approvalRef.current = next;
         setApproval(next);
@@ -165,6 +170,8 @@ export function KhieClientModule({
           approvalQueue.current.push(prompt);
           setQueuedApprovalCount(approvalQueue.current.length);
         } else {
+          approvalEnabledRef.current = false;
+          setApprovalEnabled(false);
           approvalRef.current = prompt;
           setApproval(prompt);
         }
@@ -179,8 +186,10 @@ export function KhieClientModule({
       (prompt): prompt is ApprovalPrompt => prompt !== undefined,
     );
     approvalRef.current = undefined;
+    approvalEnabledRef.current = false;
     approvalQueue.current = [];
     setApproval(undefined);
+    setApprovalEnabled(false);
     setQueuedApprovalCount(0);
     prompts.forEach((prompt) => {
       prompt.signal.removeEventListener("abort", prompt.abort);
@@ -201,6 +210,12 @@ export function KhieClientModule({
   );
 
   const resolveApproval = (approved: boolean) => {
+    if (!approvalEnabledRef.current) {
+      return;
+    }
+    approvalEnabledRef.current = false;
+    setApprovalEnabled(false);
+
     const current = approvalRef.current;
     if (!current) {
       return;
@@ -225,6 +240,21 @@ export function KhieClientModule({
     signerRef.current = signer;
     resolveSignerWaiters(signer, signerWaiters.current);
   }, [signer]);
+
+  useEffect(() => {
+    if (!approval) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      if (approvalRef.current !== approval) {
+        return;
+      }
+      approvalEnabledRef.current = true;
+      setApprovalEnabled(true);
+    }, APPROVAL_ENABLE_DELAY_MS);
+    return () => window.clearTimeout(timeout);
+  }, [approval]);
 
   useEffect(
     () => () => {
@@ -419,11 +449,16 @@ export function KhieClientModule({
                   </p>
                 ) : null}
                 <div className={`module-actions ${styles["approval-actions"]}`}>
-                  <button type="button" onClick={() => resolveApproval(false)}>
+                  <button
+                    disabled={!approvalEnabled}
+                    type="button"
+                    onClick={() => resolveApproval(false)}
+                  >
                     Reject
                   </button>
                   <button
                     className="is-primary"
+                    disabled={!approvalEnabled}
                     type="button"
                     onClick={() => resolveApproval(true)}
                   >
@@ -478,18 +513,8 @@ export function KhieClientModule({
         <div className={`module-field-wide ${styles["pairing-columns"]}`}>
           <div className={`module-field ${styles["pairing-group"]}`}>
             <span>Let a connector scan this</span>
-            {relayConnectionFailed ? (
-              <button
-                className={styles["relay-retry"]}
-                type="button"
-                disabled={!nodeReady || connectingRelay}
-                onClick={connectRelay}
-              >
-                {connectingRelay ? "Connecting…" : "Retry relay"}
-              </button>
-            ) : null}
             <div className={styles["endpoint-list"]}>
-              {pairingEndpoint ? (
+              {pairingEndpoint && !relayConnectionFailed ? (
                 <div className={styles["endpoint-pair"]}>
                   <QrCode
                     className={styles["endpoint-qr"]}
@@ -512,9 +537,24 @@ export function KhieClientModule({
                     className={styles["endpoint-qr"]}
                     title="Wallet pairing code"
                   />
-                  <span className={styles["endpoint-pending"]}>
-                    Preparing pairing code…
-                  </span>
+                  {relayConnectionFailed ? (
+                    <div className={styles["endpoint-retry"]}>
+                      <button
+                        className={styles["relay-retry"]}
+                        type="button"
+                        disabled={!nodeReady || connectingRelay}
+                        onClick={connectRelay}
+                      >
+                        Retry relay
+                      </button>
+                    </div>
+                  ) : (
+                    <span className={styles["endpoint-pending"]}>
+                      {connectingRelay
+                        ? "Connecting to relay…"
+                        : "Preparing pairing code…"}
+                    </span>
+                  )}
                 </div>
               )}
             </div>

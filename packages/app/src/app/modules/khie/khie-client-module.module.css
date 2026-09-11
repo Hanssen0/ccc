@@ -81,7 +81,6 @@
   gap: 12px;
 }
 
-.relay-retry,
 .relay-settings-toggle {
   display: flex;
   align-items: center;
@@ -96,15 +95,6 @@
   letter-spacing: 0.1em;
   list-style: none;
   text-transform: uppercase;
-}
-
-.relay-retry {
-  color: var(--signal);
-}
-
-.relay-retry:disabled {
-  color: var(--muted);
-  cursor: default;
 }
 
 .relay-settings-toggle {
@@ -956,6 +946,35 @@
   font:
     12px/1.55 "Courier New",
     monospace;
+}
+
+.endpoint-retry {
+  display: flex;
+  width: 100%;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+}
+
+.relay-retry {
+  display: flex;
+  padding: 0;
+  border: 0;
+  align-items: center;
+  gap: 6px;
+  color: var(--signal);
+  background: transparent;
+  cursor: pointer;
+  font:
+    700 10px/1 "Courier New",
+    monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.relay-retry:disabled {
+  color: var(--muted);
+  cursor: default;
 }
 
 .compatibility-help {
