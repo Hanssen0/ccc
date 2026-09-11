@@ -9,11 +9,11 @@ export const Connector = createComponent({
   elementClass: ccc.WebComponentConnector,
   react: React,
   events: {
-    onWillUpdate: ccc.ConnectorWillUpdateEvent
-      .eventName as EventName<ccc.ConnectorWillUpdateEvent>,
     onClose: ccc.ConnectorCloseEvent
       .eventName as EventName<ccc.ConnectorCloseEvent>,
     onSelectClient: ccc.SelectClientEvent
       .eventName as EventName<ccc.SelectClientEvent>,
+    onConnection: ccc.ConnectorConnectionEvent
+      .eventName as EventName<ccc.ConnectorConnectionEvent>,
   },
 });

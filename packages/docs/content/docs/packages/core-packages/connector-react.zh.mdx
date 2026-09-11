@@ -177,8 +177,7 @@ const {
 
 通过 `defaultClient` 或 `clientOptions` 传入的客户端仍由调用方持有并负责清理。
 调用 `setClient(owner)` 会将所有权转移给 Provider；该 owner 会在下次调用
-`setClient` 或 Provider 卸载时清理。为兼容旧代码，`setClient` 仍可接收裸
-`Client`，但该用法已弃用。
+`setClient` 或 Provider 卸载时清理。
 
 ## `useBorrowedOrOwned()` Hook
 

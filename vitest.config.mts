@@ -1,8 +1,10 @@
 import { defineConfig, coverageConfigDefaults } from "vitest/config";
 
 const packages = [
+  "packages/connector",
   "packages/core",
   "packages/did-ckb",
+  "packages/libp2p",
   "packages/nip07",
   "packages/ssri",
   "packages/type-id",

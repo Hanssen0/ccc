@@ -26,7 +26,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   return (
     <ccc.Provider
-      name="CCC Precision Toolkit"
+      name="CCC App"
       icon="/logo.svg"
       clientOptions={clientOptions}
       connectorProps={{

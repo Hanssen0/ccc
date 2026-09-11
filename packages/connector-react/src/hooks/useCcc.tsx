@@ -18,26 +18,13 @@ function openDefaultClient(): ccc.Owner<ccc.Client> {
   return ccc.ClientPublicTestnet.open();
 }
 
-type ClientInput = ccc.Client | ccc.Owner<ccc.Client>;
-
-function isOwner(resource: ClientInput): resource is ccc.Owner<ccc.Client> {
-  return ccc.Owner.is(resource);
-}
-
-interface SetClient {
-  (owner: ccc.Owner<ccc.Client>): void;
-  /** @deprecated Pass an Owner<Client> so the Provider can manage its lifecycle. */
-  (client: ccc.Client): void;
-  (resource: ccc.Client | ccc.Owner<ccc.Client>): void;
-}
-
 const CCC_CONTEXT = createContext<
   | {
       isOpen: boolean;
       open: () => unknown;
       close: () => unknown;
       disconnect: () => unknown;
-      setClient: SetClient;
+      setClient: (owner: ccc.Owner<ccc.Client>) => void;
       client: ccc.Client;
       wallet?: ccc.Wallet;
       signerInfo?: ccc.SignerInfo;
@@ -82,7 +69,6 @@ export function Provider({
   signersController,
   defaultClient,
   clientOptions,
-  preferredNetworks,
 }: {
   children: ReactNode;
   connectorProps?: HTMLAttributes<{}>;
@@ -96,11 +82,13 @@ export function Provider({
   signersController?: ccc.SignersController;
   defaultClient?: ccc.Client;
   clientOptions?: { icon?: string; client: ccc.Client; name: string }[];
-  preferredNetworks?: ccc.NetworkPreference[];
 }) {
   const [ref, setRef] = useState<ccc.WebComponentConnector | null>(null);
+  const connectionOwner = useRef<
+    ccc.Owner<ccc.ConnectorConnection> | undefined
+  >(undefined);
+  const [connection, setConnection] = useState<ccc.ConnectorConnection>();
   const [isOpen, setIsOpen] = useState(false);
-  const [_, setFlag] = useState(0);
   const defaultSignersController = useMemo(
     () => new SignersControllerWithFilter(signerFilter),
     [signerFilter],
@@ -116,10 +104,8 @@ export function Provider({
   );
   const client = selectedClient ?? initialClient;
 
-  const setClient = useCallback((resource: ClientInput) => {
-    const owner = isOwner(resource)
-      ? resource.map((value) => value)
-      : new ccc.OwnerUnique(resource, () => {});
+  const setClient = useCallback((resource: ccc.Owner<ccc.Client>) => {
+    const owner = resource.map((value) => value);
 
     const previous = adoptedClientOwner.current;
     adoptedClientOwner.current = owner;
@@ -131,8 +117,34 @@ export function Provider({
     setSelectedClient(event.client);
   }, []);
 
+  const onConnection = useCallback((event: ccc.ConnectorConnectionEvent) => {
+    event.stopPropagation();
+    if (event.connectionOwner && !event.connectionOwner.isValid) {
+      return;
+    }
+    const owner = event.connectionOwner?.map((connection) => connection);
+    const previous = connectionOwner.current;
+    connectionOwner.current = owner;
+    const connection = owner?.value;
+    setConnection(connection);
+
+    connection?.signerInfo.signer.onReplaced(() => {
+      if (connectionOwner.current === owner) {
+        connectionOwner.current = undefined;
+        setConnection(undefined);
+      }
+      void owner?.dispose().catch(() => {});
+    });
+    if (previous) {
+      void previous.dispose().catch(() => {});
+    }
+  }, []);
+
   useEffect(
     () => () => {
+      const owner = connectionOwner.current;
+      connectionOwner.current = undefined;
+      void owner?.dispose().catch(() => {});
       void adoptedClientOwner.current?.dispose().catch(() => {});
       adoptedClientOwner.current = undefined;
     },
@@ -163,8 +175,8 @@ export function Provider({
         setClient,
 
         client,
-        wallet: ref?.wallet,
-        signerInfo: ref?.signer,
+        wallet: connection?.wallet,
+        signerInfo: connection?.signerInfo,
       }}
     >
       <Connector
@@ -174,9 +186,8 @@ export function Provider({
         icon={icon}
         signersController={signersController ?? defaultSignersController}
         ref={setRef}
-        onWillUpdate={() => setFlag((f) => f + 1)}
         onClose={close}
-        preferredNetworks={preferredNetworks}
+        onConnection={onConnection}
         clientOptions={clientOptions}
         {...{
           ...connectorProps,
