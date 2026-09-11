@@ -2,4 +2,5 @@
 "@ckb-ccc/libp2p": patch
 ---
 
-feat(libp2p): support role markers on pairing endpoints and validate the expected remote role
+feat(libp2p): add peer pairing and JSON-RPC services and transports for Khie
+connections.

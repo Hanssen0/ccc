@@ -1,6 +1,6 @@
 ---
-"@ckb-ccc/connector": patch
-"@ckb-ccc/libp2p": patch
+"@ckb-ccc/connector": minor
 ---
 
-feat(khie): exchange optional peer names during pairing, use the page title as a Connector fallback, and share the application name with wallets
+feat(connector): add Khie peer-to-peer wallet connections, supporting pairing
+codes from either the wallet or the connector.
