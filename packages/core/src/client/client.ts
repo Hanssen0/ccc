@@ -48,7 +48,7 @@ export type ClientConfig = {
  */
 export abstract class Client {
   public cache: ClientCache;
-  public readonly scripts: Partial<Record<KnownScript, ScriptInfoLike>>;
+  private readonly scripts: Partial<Record<KnownScript, ScriptInfoLike>>;
 
   constructor(config?: ClientConfig) {
     this.cache = config?.cache ?? new ClientCacheMemory();

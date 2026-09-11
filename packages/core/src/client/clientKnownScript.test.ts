@@ -32,7 +32,6 @@ describe("Client known scripts", () => {
 
     const script = await client.getKnownScript(KnownScript.TypeId);
 
-    expect(client.scripts).toBe(scripts);
     expect(script.codeHash).toBe(scripts[KnownScript.TypeId].codeHash);
     await expect(client.getKnownScript(KnownScript.NervosDao)).rejects.toThrow(
       "No script information was found for NervosDao on ckt",
