@@ -102,14 +102,9 @@
   pointer-events: none;
 }
 
-.workspace-grid-orbit,
 .workspace-grid-plane {
   position: absolute;
-  inset: -75%;
-}
-
-.workspace-grid-plane {
-  inset: 0;
+  inset: calc(0px - var(--workspace-grid-size));
   background-image:
     repeating-linear-gradient(
       90deg,
@@ -129,27 +124,11 @@
     [data-phase="active"],
     [data-phase="exiting"]
   )
-  .workspace-grid-orbit {
+  .workspace-grid-plane {
   animation: workspace-grid-translate 90s linear infinite;
   animation-play-state: paused;
 }
 
-.module-workspace-slot:is(
-    [data-phase="entering"],
-    [data-phase="active"],
-    [data-phase="exiting"]
-  )
-  .workspace-grid-plane {
-  animation: workspace-grid-rotate 2000s linear infinite;
-  animation-play-state: paused;
-}
-
-.module-workspace-slot[data-decorative-effects-active]:is(
-    [data-phase="entering"],
-    [data-phase="active"],
-    [data-phase="exiting"]
-  )
-  .workspace-grid-orbit,
 .module-workspace-slot[data-decorative-effects-active]:is(
     [data-phase="entering"],
     [data-phase="active"],
@@ -157,12 +136,6 @@
   )
   .workspace-grid-plane {
   animation-play-state: running;
-}
-
-@keyframes workspace-grid-rotate {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 @keyframes workspace-grid-translate {

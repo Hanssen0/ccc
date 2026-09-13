@@ -279,9 +279,7 @@ function MountedModuleWorkspace({
       aria-label={`${module.name} workspace`}
     >
       <div className="workspace-backdrop" aria-hidden="true">
-        <span className="workspace-grid-orbit">
-          <span className="workspace-grid-plane" />
-        </span>
+        <span className="workspace-grid-plane" />
       </div>
 
       <div className="workspace-hardware" aria-hidden="true">
