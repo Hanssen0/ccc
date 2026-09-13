@@ -2,141 +2,213 @@
 
 import { ccc } from "@ckb-ccc/connector-react";
 import { ArrowUpRight, Circle } from "lucide-react";
-import { memo, useCallback, useLayoutEffect, useRef, useState } from "react";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
 import type { DemoLogger } from "./activity-console";
 import { ModuleReadout, type ModuleReadoutState } from "./module-readout";
 import type { DemoModule, SubmitTransaction } from "./modules";
 import { showTransaction } from "./modules/module-helpers";
 import { useDecorativeAnimationVisibility } from "./use-decorative-animation-visibility";
 
+type WorkspacePhase = "hidden" | "entering" | "active" | "exiting";
+type ExitTarget = "hidden" | "unmounted";
+
+type WorkspacePresentation = {
+  exitTarget?: ExitTarget;
+  module?: DemoModule;
+  phase: WorkspacePhase;
+  revision: number;
+};
+
+type WorkspacePresentationAction =
+  | {
+      type: "sync";
+      module?: DemoModule;
+      visible: boolean;
+    }
+  | {
+      type: "complete";
+      phase: "entering" | "exiting";
+      revision: number;
+    };
+
+const WORKSPACE_TRANSITION_FALLBACK_MS = 700;
+
+function updateWorkspacePresentation(
+  state: WorkspacePresentation,
+  action: WorkspacePresentationAction,
+): WorkspacePresentation {
+  if (action.type === "complete") {
+    if (state.phase !== action.phase || state.revision !== action.revision) {
+      return state;
+    }
+
+    if (action.phase === "entering") {
+      return { ...state, phase: "active" };
+    }
+
+    return {
+      module: state.exitTarget === "unmounted" ? undefined : state.module,
+      phase: "hidden",
+      revision: state.revision,
+    };
+  }
+
+  const sameModule = state.module?.id === action.module?.id;
+  if (!action.module) {
+    if (!state.module) {
+      return state;
+    }
+    if (state.phase === "hidden") {
+      return {
+        module: undefined,
+        phase: "hidden",
+        revision: state.revision + 1,
+      };
+    }
+    if (state.phase === "exiting" && state.exitTarget === "unmounted") {
+      return state;
+    }
+
+    return {
+      ...state,
+      exitTarget: "unmounted",
+      phase: "exiting",
+      revision: state.revision + 1,
+    };
+  }
+
+  if (!sameModule) {
+    return {
+      module: action.module,
+      phase: action.visible ? "entering" : "hidden",
+      revision: state.revision + 1,
+    };
+  }
+
+  if (action.visible) {
+    if (state.phase === "entering" || state.phase === "active") {
+      return state;
+    }
+
+    return {
+      ...state,
+      exitTarget: undefined,
+      phase: "entering",
+      revision: state.revision + 1,
+    };
+  }
+
+  if (
+    state.phase === "hidden" ||
+    (state.phase === "exiting" && state.exitTarget === "hidden")
+  ) {
+    return state;
+  }
+
+  return {
+    ...state,
+    exitTarget: "hidden",
+    phase: "exiting",
+    revision: state.revision + 1,
+  };
+}
+
 export const ModuleWorkspace = memo(function ModuleWorkspace({
-  active,
   client,
-  exiting,
   log,
   module,
-  onExitComplete,
   setClient,
   signer,
+  visible,
   wallet,
 }: {
-  active: boolean;
   client: ccc.Client;
-  exiting?: boolean;
   log: DemoLogger;
   module?: DemoModule;
-  onExitComplete?: (moduleId: DemoModule["id"]) => void;
   setClient: (owner: ccc.Owner<ccc.Client>) => unknown;
   signer?: ccc.Signer;
+  visible: boolean;
   wallet?: ccc.Wallet;
 }) {
-  const Module = module?.component;
   const slotRef = useRef<HTMLDivElement>(null);
-  const workspaceRef = useRef<HTMLElement>(null);
   useDecorativeAnimationVisibility(slotRef);
-  const exitRef = useRef<
-    | {
-        completed: boolean;
-        moduleId: DemoModule["id"];
-        timer: ReturnType<typeof setTimeout>;
-      }
-    | undefined
-  >(undefined);
-
-  const completeExit = useCallback(
-    (moduleId: DemoModule["id"]) => {
-      const pending = exitRef.current;
-      if (!pending || pending.completed || pending.moduleId !== moduleId) {
-        return;
-      }
-
-      pending.completed = true;
-      clearTimeout(pending.timer);
-      exitRef.current = undefined;
-      onExitComplete?.(moduleId);
+  const [presentation, dispatchPresentation] = useReducer(
+    updateWorkspacePresentation,
+    {
+      phase: "hidden",
+      revision: 0,
     },
-    [onExitComplete],
   );
 
-  useLayoutEffect(() => {
-    const slot = slotRef.current;
-    const workspace = workspaceRef.current;
-    if (!slot || !workspace) return;
+  useEffect(() => {
+    dispatchPresentation({ type: "sync", module, visible });
+  }, [module, visible]);
 
-    let measurementFrame = 0;
-    let previousHeight: number | undefined;
-    const syncHeight = () => {
-      measurementFrame = 0;
-      const height = workspace.getBoundingClientRect().height;
-      if (height === previousHeight) {
-        return;
-      }
-
-      previousHeight = height;
-      slot.style.setProperty("--module-workspace-height", `${height}px`);
-    };
-    const queueSyncHeight = () => {
-      if (measurementFrame === 0) {
-        measurementFrame = requestAnimationFrame(syncHeight);
-      }
-    };
-    const observer = new ResizeObserver(queueSyncHeight);
-    syncHeight();
-    observer.observe(workspace);
-
-    return () => {
-      cancelAnimationFrame(measurementFrame);
-      observer.disconnect();
-    };
-  }, [module?.id]);
-
-  useLayoutEffect(() => {
-    if (active || !exiting || !module || !onExitComplete) {
+  useEffect(() => {
+    if (presentation.phase !== "entering" && presentation.phase !== "exiting") {
       return;
     }
 
-    const pending = {
-      completed: false,
-      moduleId: module.id,
-      timer: setTimeout(() => completeExit(module.id), 720),
-    };
-    exitRef.current = pending;
+    const phase = presentation.phase;
+    const revision = presentation.revision;
+    const timer = setTimeout(() => {
+      dispatchPresentation({ type: "complete", phase, revision });
+    }, WORKSPACE_TRANSITION_FALLBACK_MS);
+    return () => clearTimeout(timer);
+  }, [presentation.phase, presentation.revision]);
 
-    return () => {
-      if (exitRef.current === pending) {
-        exitRef.current = undefined;
-      }
-      clearTimeout(pending.timer);
-    };
-  }, [active, completeExit, exiting, module, onExitComplete]);
+  const interactive =
+    presentation.phase === "entering" || presentation.phase === "active";
+  const presentedModule = presentation.module;
+  const Module = presentedModule?.component;
 
   return (
     <div
       ref={slotRef}
-      className={`module-workspace-slot ${active ? "is-active" : ""}`}
-      aria-hidden={!active}
-      onTransitionEnd={(event) => {
-        if (
-          exiting &&
-          module &&
-          event.target === event.currentTarget &&
-          event.propertyName === "height"
-        ) {
-          completeExit(module.id);
+      className="module-workspace-slot"
+      data-phase={presentation.phase}
+      aria-hidden={!interactive}
+      onAnimationEnd={(event) => {
+        if (event.target !== event.currentTarget) {
+          return;
         }
+
+        const phase = presentation.phase;
+        if (phase !== "entering" && phase !== "exiting") {
+          return;
+        }
+        const expectedAnimation =
+          phase === "entering"
+            ? "workspace-layout-enter"
+            : "workspace-layout-exit";
+        if (event.animationName !== expectedAnimation) {
+          return;
+        }
+
+        dispatchPresentation({
+          type: "complete",
+          phase,
+          revision: presentation.revision,
+        });
       }}
     >
-      {module && Module ? (
-        <div className="workspace-reveal">
+      {presentedModule && Module ? (
+        <div className="workspace-layout-clip">
           <MountedModuleWorkspace
-            key={module.id}
+            key={presentedModule.id}
             client={client}
             log={log}
-            module={module}
+            module={presentedModule}
             setClient={setClient}
             signer={signer}
             wallet={wallet}
-            workspaceRef={workspaceRef}
           />
         </div>
       ) : null}
@@ -151,7 +223,6 @@ function MountedModuleWorkspace({
   setClient,
   signer,
   wallet,
-  workspaceRef,
 }: {
   client: ccc.Client;
   log: DemoLogger;
@@ -159,7 +230,6 @@ function MountedModuleWorkspace({
   setClient: (owner: ccc.Owner<ccc.Client>) => unknown;
   signer?: ccc.Signer;
   wallet?: ccc.Wallet;
-  workspaceRef: React.RefObject<HTMLElement | null>;
 }) {
   const Module = module.component;
   const moduleLog = useCallback(
@@ -205,7 +275,6 @@ function MountedModuleWorkspace({
 
   return (
     <section
-      ref={workspaceRef}
       className="module-workspace"
       aria-label={`${module.name} workspace`}
     >

@@ -51,32 +51,44 @@
   );
   transition:
     transform 720ms var(--easing-mechanical),
-    opacity 300ms ease;
+    opacity 300ms ease,
+    visibility 0s linear;
+}
+
+.machine-panel[aria-hidden="true"] {
+  pointer-events: none;
 }
 
 .connection-panel {
   position: relative;
   inset: auto;
+  visibility: visible;
   background: rgb(17 24 28 / 50%);
   transform: none;
+  transition-delay: 0s, 0s, 0s;
 }
 
 .account-panel {
+  visibility: hidden;
   transform: translateX(112%);
+  transition-delay: 0s, 0s, 720ms;
 }
 
 .machine.is-connected .connection-panel {
   position: absolute;
   inset: 0;
+  visibility: hidden;
   opacity: 0;
   transform: translateX(-112%);
-  pointer-events: none;
+  transition-delay: 0s, 0s, 720ms;
 }
 
 .machine.is-connected .account-panel {
   position: relative;
   inset: auto;
+  visibility: visible;
   transform: none;
+  transition-delay: 0s, 0s, 0s;
 }
 
 .panel-hardware {
@@ -386,6 +398,12 @@
   .machine-panel {
     grid-template-columns: 1fr 300px;
     padding: 38px 30px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .machine-panel {
+    transition-delay: 0s;
   }
 }
 

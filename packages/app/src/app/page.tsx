@@ -64,12 +64,9 @@ export default function Home() {
   const [privateKeyVisible, setPrivateKeyVisible] = useState(false);
   const [privateKeyError, setPrivateKeyError] = useState<string>();
   const [selectedModule, setSelectedModule] = useState<DemoModule>();
-  const [stagedModule, setStagedModule] = useState<DemoModule>();
-  const [workspaceVisible, setWorkspaceVisible] = useState(false);
   const [telemetry, setTelemetry] = useState<Telemetry>();
   const [activeAddress, setActiveAddress] = useState<string>();
   const accountPanelRef = useRef<HTMLElement>(null);
-  const backgroundOwnerRef = useRef<HTMLDivElement>(null);
   const previousNetworkRef = useRef(client.addressPrefix);
   const previousSelectedModuleRef = useRef<DemoModule | undefined>(undefined);
   const signer = useMemo(() => {
@@ -97,7 +94,7 @@ export default function Home() {
   const connectionDisconnected = connectionStatus.disconnected;
   const usingPrivateKey = privateKeySigner !== undefined;
   const needsAccess = selectedModule?.access === "signer";
-  const displayedModule = selectedModule ?? stagedModule;
+  const displayedModule = selectedModule;
   const workspaceReady =
     selectedModule !== undefined && (!needsAccess || connected);
   useDecorativeAnimationVisibility(accountPanelRef);
@@ -137,31 +134,6 @@ export default function Home() {
   useLayoutEffect(() => {
     document.body.classList.toggle("has-active-workspace", workspaceReady);
   }, [workspaceReady]);
-
-  useEffect(() => {
-    let stageFrame = 0;
-
-    stageFrame = requestAnimationFrame(() => {
-      setWorkspaceVisible(false);
-      if (selectedModule) {
-        setStagedModule(selectedModule);
-      }
-    });
-
-    return () => {
-      cancelAnimationFrame(stageFrame);
-    };
-  }, [selectedModule]);
-
-  useEffect(() => {
-    const activeFrame = requestAnimationFrame(() => {
-      setWorkspaceVisible(
-        workspaceReady && stagedModule?.id === selectedModule?.id,
-      );
-    });
-
-    return () => cancelAnimationFrame(activeFrame);
-  }, [selectedModule, stagedModule, workspaceReady]);
 
   const disconnect = () => {
     setTelemetry(undefined);
@@ -263,11 +235,6 @@ export default function Home() {
   }, [signer]);
 
   useEffect(() => {
-    const owner = backgroundOwnerRef.current;
-    if (!owner) {
-      return;
-    }
-
     let backgroundFrame = 0;
     let previousPosition: number | undefined;
     const syncBackgroundPosition = () => {
@@ -278,7 +245,7 @@ export default function Home() {
       }
 
       previousPosition = position;
-      owner.style.setProperty("--page-scroll-y", `${position}px`);
+      document.body.style.setProperty("--page-scroll-y", `${position}px`);
     };
     const queueBackgroundPosition = () => {
       if (backgroundFrame === 0) {
@@ -294,7 +261,7 @@ export default function Home() {
     return () => {
       window.removeEventListener("scroll", queueBackgroundPosition);
       cancelAnimationFrame(backgroundFrame);
-      owner.style.removeProperty("--page-scroll-y");
+      document.body.style.removeProperty("--page-scroll-y");
       document.body.classList.remove("has-active-workspace");
     };
   }, []);
@@ -312,29 +279,12 @@ export default function Home() {
     setModuleAnchor();
   }, []);
 
-  const releaseStagedModule = useCallback(
-    (moduleId: DemoModule["id"]) => {
-      if (selectedModule) {
-        return;
-      }
-
-      setStagedModule((current) =>
-        current?.id === moduleId ? undefined : current,
-      );
-    },
-    [selectedModule],
-  );
-
   return (
     <>
       <div
-        ref={backgroundOwnerRef}
-        className="background-owner"
+        className="background-projection page-background"
         aria-hidden="true"
-      >
-        <div className="background-projection page-background" />
-        <div className="background-projection footer-background" />
-      </div>
+      />
 
       <main className="demo-shell">
         <header className="topbar">
@@ -373,14 +323,12 @@ export default function Home() {
           />
 
           <ModuleWorkspace
-            active={workspaceVisible}
             client={client}
-            exiting={selectedModule === undefined && stagedModule !== undefined}
             log={log}
-            module={stagedModule}
-            onExitComplete={releaseStagedModule}
+            module={selectedModule}
             setClient={setClient}
             signer={signer}
+            visible={workspaceReady}
             wallet={usingPrivateKey ? undefined : wallet}
           />
 

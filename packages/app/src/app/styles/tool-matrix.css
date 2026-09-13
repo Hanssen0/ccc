@@ -138,6 +138,10 @@
   height: 0;
 }
 
+.tool-grid-viewport.is-collapse-settled {
+  visibility: hidden;
+}
+
 .tool-module {
   --module-access-color: var(--ink);
 
