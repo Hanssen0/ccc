@@ -25,11 +25,15 @@ export const ToolBay = memo(function ToolBay({
       return;
     }
 
+    let previousHeight: number | undefined;
     const syncHeight = () => {
-      viewport.style.setProperty(
-        "--tool-grid-height",
-        `${grid.scrollHeight}px`,
-      );
+      const height = grid.scrollHeight;
+      if (height === previousHeight) {
+        return;
+      }
+
+      previousHeight = height;
+      viewport.style.setProperty("--tool-grid-height", `${height}px`);
     };
     const observer = new ResizeObserver(syncHeight);
     syncHeight();

@@ -17,7 +17,7 @@
   height: var(--module-workspace-height, 0px);
   margin-top: 34px;
   opacity: 1;
-  transform: translateY(0);
+  transform: none;
   pointer-events: auto;
 }
 
@@ -48,7 +48,7 @@
 }
 
 .module-workspace-slot.is-active .workspace-reveal {
-  animation: workspace-reveal-enter 620ms var(--easing-mechanical) both;
+  animation: workspace-reveal-enter 620ms var(--easing-mechanical) backwards;
 }
 
 @keyframes workspace-reveal-enter {
@@ -147,7 +147,7 @@
 }
 
 .module-workspace-slot.is-active .workspace-hardware {
-  animation: workspace-detail-enter 360ms ease 180ms both;
+  animation: workspace-detail-enter 360ms ease 180ms backwards;
 }
 
 .workspace-hardware-line {
@@ -187,7 +187,8 @@
 .module-workspace-slot.is-active
   .workspace-header
   > *:not(.workspace-header-glyph-viewport) {
-  animation: workspace-detail-enter 420ms var(--easing-mechanical) 230ms both;
+  animation: workspace-detail-enter 420ms var(--easing-mechanical) 230ms
+    backwards;
 }
 
 @keyframes workspace-detail-enter {
@@ -218,7 +219,8 @@
 }
 
 .module-workspace-slot.is-active .workspace-header-glyph {
-  animation: workspace-glyph-enter 720ms var(--easing-mechanical) 170ms both;
+  animation: workspace-glyph-enter 720ms var(--easing-mechanical) 170ms
+    backwards;
 }
 
 @keyframes workspace-glyph-enter {
@@ -293,15 +295,18 @@
 }
 
 .module-workspace-slot.is-active .module-fields {
-  animation: workspace-control-enter 440ms var(--easing-mechanical) 310ms both;
+  animation: workspace-control-enter 440ms var(--easing-mechanical) 310ms
+    backwards;
 }
 
 .module-workspace-slot.is-active .module-actions {
-  animation: workspace-control-enter 440ms var(--easing-mechanical) 500ms both;
+  animation: workspace-control-enter 440ms var(--easing-mechanical) 500ms
+    backwards;
 }
 
 .module-workspace-slot.is-active .module-readout {
-  animation: workspace-control-enter 440ms var(--easing-mechanical) 570ms both;
+  animation: workspace-control-enter 440ms var(--easing-mechanical) 570ms
+    backwards;
 }
 
 @keyframes workspace-control-enter {

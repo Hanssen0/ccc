@@ -58,7 +58,7 @@
   position: relative;
   inset: auto;
   background: rgb(17 24 28 / 50%);
-  transform: translateX(0);
+  transform: none;
 }
 
 .account-panel {
@@ -76,7 +76,7 @@
 .machine.is-connected .account-panel {
   position: relative;
   inset: auto;
-  transform: translateX(0);
+  transform: none;
 }
 
 .panel-hardware {
@@ -243,7 +243,7 @@
 .private-key-form {
   display: grid;
   gap: 9px;
-  animation: private-key-form-enter 280ms var(--easing-mechanical) both;
+  animation: private-key-form-enter 280ms var(--easing-mechanical) backwards;
 }
 
 .private-key-field {
@@ -345,7 +345,11 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  transition: 160ms ease;
+  transition:
+    border-color 160ms ease,
+    color 160ms ease,
+    background-color 160ms ease,
+    opacity 160ms ease;
 }
 
 .private-key-actions button:hover {

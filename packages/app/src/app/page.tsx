@@ -67,6 +67,7 @@ export default function Home() {
   const [workspaceVisible, setWorkspaceVisible] = useState(false);
   const [telemetry, setTelemetry] = useState<Telemetry>();
   const [activeAddress, setActiveAddress] = useState<string>();
+  const backgroundOwnerRef = useRef<HTMLDivElement>(null);
   const previousNetworkRef = useRef(client.addressPrefix);
   const previousSelectedModuleRef = useRef<DemoModule | undefined>(undefined);
   const signer = useMemo(() => {
@@ -136,20 +137,16 @@ export default function Home() {
 
   useEffect(() => {
     let stageFrame = 0;
-    let releaseTimer: ReturnType<typeof setTimeout> | undefined;
 
     stageFrame = requestAnimationFrame(() => {
       setWorkspaceVisible(false);
       if (selectedModule) {
         setStagedModule(selectedModule);
-      } else {
-        releaseTimer = setTimeout(() => setStagedModule(undefined), 720);
       }
     });
 
     return () => {
       cancelAnimationFrame(stageFrame);
-      clearTimeout(releaseTimer);
     };
   }, [selectedModule]);
 
@@ -263,21 +260,38 @@ export default function Home() {
   }, [signer]);
 
   useEffect(() => {
+    const owner = backgroundOwnerRef.current;
+    if (!owner) {
+      return;
+    }
+
+    let backgroundFrame = 0;
+    let previousPosition: number | undefined;
     const syncBackgroundPosition = () => {
-      document.body.style.setProperty(
-        "--page-scroll-y",
-        `${-window.scrollY * BODY_BACKGROUND_PARALLAX}px`,
-      );
+      backgroundFrame = 0;
+      const position = Math.round(-window.scrollY * BODY_BACKGROUND_PARALLAX);
+      if (position === previousPosition) {
+        return;
+      }
+
+      previousPosition = position;
+      owner.style.setProperty("--page-scroll-y", `${position}px`);
+    };
+    const queueBackgroundPosition = () => {
+      if (backgroundFrame === 0) {
+        backgroundFrame = requestAnimationFrame(syncBackgroundPosition);
+      }
     };
 
     syncBackgroundPosition();
-    window.addEventListener("scroll", syncBackgroundPosition, {
+    window.addEventListener("scroll", queueBackgroundPosition, {
       passive: true,
     });
 
     return () => {
-      window.removeEventListener("scroll", syncBackgroundPosition);
-      document.body.style.removeProperty("--page-scroll-y");
+      window.removeEventListener("scroll", queueBackgroundPosition);
+      cancelAnimationFrame(backgroundFrame);
+      owner.style.removeProperty("--page-scroll-y");
       document.body.classList.remove("has-active-workspace");
     };
   }, []);
@@ -295,16 +309,29 @@ export default function Home() {
     setModuleAnchor();
   }, []);
 
+  const releaseStagedModule = useCallback(
+    (moduleId: DemoModule["id"]) => {
+      if (selectedModule) {
+        return;
+      }
+
+      setStagedModule((current) =>
+        current?.id === moduleId ? undefined : current,
+      );
+    },
+    [selectedModule],
+  );
+
   return (
     <>
       <div
-        className="background-projection page-background"
+        ref={backgroundOwnerRef}
+        className="background-owner"
         aria-hidden="true"
-      />
-      <div
-        className="background-projection footer-background"
-        aria-hidden="true"
-      />
+      >
+        <div className="background-projection page-background" />
+        <div className="background-projection footer-background" />
+      </div>
 
       <main className="demo-shell">
         <header className="topbar">
@@ -345,8 +372,10 @@ export default function Home() {
           <ModuleWorkspace
             active={workspaceVisible}
             client={client}
+            exiting={selectedModule === undefined && stagedModule !== undefined}
             log={log}
             module={stagedModule}
+            onExitComplete={releaseStagedModule}
             setClient={setClient}
             signer={signer}
             wallet={usingPrivateKey ? undefined : wallet}
@@ -641,8 +670,25 @@ function AddressList({
   onActiveAddressChange?: (address: string) => void;
 }) {
   const listRef = useRef<HTMLDivElement>(null);
+  const activeIndexRef = useRef(0);
+  const rowStepRef = useRef(42);
+  const scrollFrameRef = useRef(0);
   const addressCount = addresses?.length ?? 0;
   const [activeIndex, setActiveIndex] = useState(0);
+
+  const publishActiveIndex = useCallback(
+    (index: number) => {
+      const nextIndex = Math.max(0, Math.min(addressCount - 1, index));
+      if (nextIndex === activeIndexRef.current) {
+        return;
+      }
+
+      activeIndexRef.current = nextIndex;
+      setActiveIndex(nextIndex);
+      onActiveAddressChange?.(addresses?.[nextIndex] ?? "");
+    },
+    [addressCount, addresses, onActiveAddressChange],
+  );
 
   useEffect(() => {
     const list = listRef.current;
@@ -652,6 +698,18 @@ function AddressList({
 
     let gestureLocked = false;
     let unlockTimer: ReturnType<typeof setTimeout> | undefined;
+    const refreshRowStep = () => {
+      rowStepRef.current = getAddressRowStep(list);
+    };
+    const publishScrolledIndex = () => {
+      scrollFrameRef.current = 0;
+      publishActiveIndex(Math.round(list.scrollTop / rowStepRef.current));
+    };
+    const queueScrolledIndex = () => {
+      if (scrollFrameRef.current === 0) {
+        scrollFrameRef.current = requestAnimationFrame(publishScrolledIndex);
+      }
+    };
     const unlockAfterGesture = () => {
       clearTimeout(unlockTimer);
       unlockTimer = setTimeout(() => {
@@ -670,7 +728,7 @@ function AddressList({
         return;
       }
 
-      const rowStep = getAddressRowStep(list);
+      const rowStep = rowStepRef.current;
       const currentIndex = Math.round(list.scrollTop / rowStep);
       const nextIndex = Math.max(
         0,
@@ -683,30 +741,35 @@ function AddressList({
 
       event.preventDefault();
       gestureLocked = true;
-      setActiveIndex(nextIndex);
-      onActiveAddressChange?.(addresses?.[nextIndex] ?? "");
+      publishActiveIndex(nextIndex);
       list.scrollTo({ top: nextIndex * rowStep, behavior: "smooth" });
       unlockAfterGesture();
     };
 
+    refreshRowStep();
+    const resizeObserver = new ResizeObserver(refreshRowStep);
+    resizeObserver.observe(list);
+    const firstRow = list.querySelector<HTMLElement>(".address-row");
+    if (firstRow) {
+      resizeObserver.observe(firstRow);
+    }
+    list.addEventListener("scroll", queueScrolledIndex, { passive: true });
     list.addEventListener("wheel", handleWheel, { passive: false });
     return () => {
       clearTimeout(unlockTimer);
+      cancelAnimationFrame(scrollFrameRef.current);
+      scrollFrameRef.current = 0;
+      resizeObserver.disconnect();
+      list.removeEventListener("scroll", queueScrolledIndex);
       list.removeEventListener("wheel", handleWheel);
     };
-  }, [addressCount, addresses, onActiveAddressChange]);
+  }, [addressCount, publishActiveIndex]);
 
   return (
     <div
       ref={listRef}
       className={`address-list ${!addresses ? "is-loading" : ""}`}
       aria-label="Wallet addresses"
-      onScroll={(event) => {
-        const rowStep = getAddressRowStep(event.currentTarget);
-        const nextIndex = Math.round(event.currentTarget.scrollTop / rowStep);
-        setActiveIndex(nextIndex);
-        onActiveAddressChange?.(addresses?.[nextIndex] ?? "");
-      }}
     >
       {!addresses ? (
         <div className="address-row is-loading">Reading signer…</div>
@@ -758,10 +821,9 @@ function AddressList({
               aria-label={`Scroll to address ${address}`}
               key={`${address}-${index}`}
               onClick={() => {
-                setActiveIndex(index);
-                onActiveAddressChange?.(address);
+                publishActiveIndex(index);
                 listRef.current?.scrollTo({
-                  top: index * getAddressRowStep(listRef.current),
+                  top: index * rowStepRef.current,
                   behavior: "smooth",
                 });
               }}

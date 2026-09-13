@@ -11,16 +11,20 @@ import { showTransaction } from "./modules/module-helpers";
 export const ModuleWorkspace = memo(function ModuleWorkspace({
   active,
   client,
+  exiting,
   log,
   module,
+  onExitComplete,
   setClient,
   signer,
   wallet,
 }: {
   active: boolean;
   client: ccc.Client;
+  exiting?: boolean;
   log: DemoLogger;
   module?: DemoModule;
+  onExitComplete?: (moduleId: DemoModule["id"]) => void;
   setClient: (owner: ccc.Owner<ccc.Client>) => unknown;
   signer?: ccc.Signer;
   wallet?: ccc.Wallet;
@@ -28,30 +32,97 @@ export const ModuleWorkspace = memo(function ModuleWorkspace({
   const Module = module?.component;
   const slotRef = useRef<HTMLDivElement>(null);
   const workspaceRef = useRef<HTMLElement>(null);
+  const exitRef = useRef<
+    | {
+        completed: boolean;
+        moduleId: DemoModule["id"];
+        timer: ReturnType<typeof setTimeout>;
+      }
+    | undefined
+  >(undefined);
+
+  const completeExit = useCallback(
+    (moduleId: DemoModule["id"]) => {
+      const pending = exitRef.current;
+      if (!pending || pending.completed || pending.moduleId !== moduleId) {
+        return;
+      }
+
+      pending.completed = true;
+      clearTimeout(pending.timer);
+      exitRef.current = undefined;
+      onExitComplete?.(moduleId);
+    },
+    [onExitComplete],
+  );
 
   useLayoutEffect(() => {
     const slot = slotRef.current;
     const workspace = workspaceRef.current;
     if (!slot || !workspace) return;
 
+    let measurementFrame = 0;
+    let previousHeight: number | undefined;
     const syncHeight = () => {
-      slot.style.setProperty(
-        "--module-workspace-height",
-        `${workspace.getBoundingClientRect().height}px`,
-      );
+      measurementFrame = 0;
+      const height = workspace.getBoundingClientRect().height;
+      if (height === previousHeight) {
+        return;
+      }
+
+      previousHeight = height;
+      slot.style.setProperty("--module-workspace-height", `${height}px`);
     };
-    const observer = new ResizeObserver(syncHeight);
+    const queueSyncHeight = () => {
+      if (measurementFrame === 0) {
+        measurementFrame = requestAnimationFrame(syncHeight);
+      }
+    };
+    const observer = new ResizeObserver(queueSyncHeight);
     syncHeight();
     observer.observe(workspace);
 
-    return () => observer.disconnect();
+    return () => {
+      cancelAnimationFrame(measurementFrame);
+      observer.disconnect();
+    };
   }, [module?.id]);
+
+  useLayoutEffect(() => {
+    if (active || !exiting || !module || !onExitComplete) {
+      return;
+    }
+
+    const pending = {
+      completed: false,
+      moduleId: module.id,
+      timer: setTimeout(() => completeExit(module.id), 720),
+    };
+    exitRef.current = pending;
+
+    return () => {
+      if (exitRef.current === pending) {
+        exitRef.current = undefined;
+      }
+      clearTimeout(pending.timer);
+    };
+  }, [active, completeExit, exiting, module, onExitComplete]);
 
   return (
     <div
       ref={slotRef}
       className={`module-workspace-slot ${active ? "is-active" : ""}`}
       aria-hidden={!active}
+      onTransitionEnd={(event) => {
+        if (
+          exiting &&
+          module &&
+          event.target === event.currentTarget &&
+          event.propertyName === "height"
+        ) {
+          completeExit(module.id);
+        }
+      }}
     >
       {module && Module ? (
         <div className="workspace-reveal">

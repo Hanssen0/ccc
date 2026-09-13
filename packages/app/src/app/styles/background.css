@@ -27,7 +27,7 @@
   background-size: 32px 32px;
   content: "";
   pointer-events: none;
-  transform: rotate(0deg);
+  transform: none;
   translate: 0 var(--page-scroll-y, 0px);
   transition:
     transform 4000ms linear,
@@ -39,7 +39,6 @@
 .footer-background::after {
   inset: auto -15vmax -15vmax;
   height: calc(100dvh + 30vmax);
-  will-change: translate;
 }
 
 .background-projection::before {

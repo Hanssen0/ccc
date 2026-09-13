@@ -42,12 +42,11 @@
   background-size: 18px 18px;
   transform: translateY(calc(100% + 1px));
   pointer-events: none;
-  will-change: transform;
   transition: transform 600ms var(--easing-mechanical);
 }
 
 .activity-console-panel.is-open {
-  transform: translateY(0);
+  transform: none;
   pointer-events: auto;
 }
 
@@ -279,7 +278,8 @@
 }
 
 .activity-console-preview-line.is-entering {
-  animation: activity-preview-slot-in 460ms var(--easing-mechanical) 55ms both;
+  animation: activity-preview-slot-in 460ms var(--easing-mechanical) 55ms
+    backwards;
 }
 
 @keyframes activity-preview-slot-out {

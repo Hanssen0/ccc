@@ -793,17 +793,6 @@ function RemotePeerDetails({
   onUnpair: () => void;
   peer?: KhieRemotePeer;
 }) {
-  const [now, setNow] = useState(peer?.lastSeenAt ?? 0);
-
-  useEffect(() => {
-    if (peer?.active !== false || peer.lastSeenAt === undefined) {
-      return;
-    }
-
-    const interval = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(interval);
-  }, [peer?.active, peer?.lastSeenAt]);
-
   const path = !peer?.active ? "Inactive" : peer.direct ? "Direct" : "Relayed";
   const name = displayPeerName(peer?.name);
 
@@ -845,17 +834,36 @@ function RemotePeerDetails({
           <div className={styles["peer-time"]}>
             <span>Last seen</span>
             <strong>
-              {peer.active
-                ? "Active"
-                : peer.lastSeenAt === undefined
-                  ? "Not available"
-                  : formatElapsedDuration(peer.lastSeenAt, now)}
+              {peer.active ? (
+                "Active"
+              ) : peer.lastSeenAt === undefined ? (
+                "Not available"
+              ) : (
+                <InactiveLastSeen
+                  key={peer.lastSeenAt}
+                  timestamp={peer.lastSeenAt}
+                />
+              )}
             </strong>
           </div>
         </div>
       ) : null}
     </section>
   );
+}
+
+function InactiveLastSeen({ timestamp }: { timestamp: number }) {
+  const [now, setNow] = useState(Date.now);
+
+  useEffect(() => {
+    const timeout = setTimeout(
+      () => setNow(Date.now()),
+      nextElapsedDurationBoundary(timestamp, now),
+    );
+    return () => clearTimeout(timeout);
+  }, [now, timestamp]);
+
+  return formatElapsedDuration(timestamp, now);
 }
 
 type TransactionCellView = {
@@ -1226,6 +1234,23 @@ function formatElapsedDuration(timestamp: number, now: number) {
 
   const days = Math.floor(hours / 24);
   return `${days} day${days === 1 ? "" : "s"} ago`;
+}
+
+function nextElapsedDurationBoundary(timestamp: number, now: number) {
+  const elapsed = Math.max(0, now - timestamp);
+  const minute = 60_000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+  const unit =
+    elapsed < minute
+      ? 1_000
+      : elapsed < hour
+        ? minute
+        : elapsed < day
+          ? hour
+          : day;
+  const nextBoundary = timestamp + (Math.floor(elapsed / unit) + 1) * unit;
+  return Math.max(1, nextBoundary - now);
 }
 
 function clientOwnerForNetworkId(networkId: string, current: ccc.Client) {
