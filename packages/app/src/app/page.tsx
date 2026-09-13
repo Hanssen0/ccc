@@ -31,6 +31,7 @@ import { ModuleWorkspace } from "./module-workspace";
 import { demoModules, type DemoModule } from "./modules";
 import { QrCode } from "./qr-code";
 import { ToolBay } from "./tool-bay";
+import { useDecorativeAnimationVisibility } from "./use-decorative-animation-visibility";
 
 type Telemetry = {
   addresses: string[];
@@ -67,6 +68,7 @@ export default function Home() {
   const [workspaceVisible, setWorkspaceVisible] = useState(false);
   const [telemetry, setTelemetry] = useState<Telemetry>();
   const [activeAddress, setActiveAddress] = useState<string>();
+  const accountPanelRef = useRef<HTMLElement>(null);
   const backgroundOwnerRef = useRef<HTMLDivElement>(null);
   const previousNetworkRef = useRef(client.addressPrefix);
   const previousSelectedModuleRef = useRef<DemoModule | undefined>(undefined);
@@ -98,6 +100,7 @@ export default function Home() {
   const displayedModule = selectedModule ?? stagedModule;
   const workspaceReady =
     selectedModule !== undefined && (!needsAccess || connected);
+  useDecorativeAnimationVisibility(accountPanelRef);
 
   useEffect(() => {
     const selectModuleFromAnchor = () => {
@@ -546,6 +549,7 @@ export default function Home() {
             </section>
 
             <section
+              ref={accountPanelRef}
               className="machine-panel account-panel"
               aria-hidden={!connected}
             >

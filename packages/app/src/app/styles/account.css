@@ -176,6 +176,7 @@
   content: "";
   opacity: 0.65;
   animation: backplane-vent-scroll 1.1s linear infinite;
+  animation-play-state: paused;
 }
 
 .vent-left {
@@ -431,6 +432,7 @@ a.account-balance:focus-visible span {
   border: 1px solid var(--signal-dark);
   border-radius: 50%;
   animation: seal-pulse 2s ease-out infinite;
+  animation-play-state: paused;
 }
 
 @keyframes seal-pulse {
@@ -511,6 +513,7 @@ a.account-balance:focus-visible span {
     opacity: 0.6;
     pointer-events: none;
     animation: account-mobile-rail-scroll 1.1s linear infinite;
+    animation-play-state: paused;
   }
 
   .account-panel::before {
@@ -631,4 +634,15 @@ a.account-balance:focus-visible span {
     padding-inline: 3px;
     font-size: 9px;
   }
+}
+
+.machine.is-connected
+  .account-panel[data-decorative-effects-active]
+  .backplane-vent::before,
+.machine.is-connected
+  .account-panel[data-decorative-effects-active]
+  .seal-pulse,
+.machine.is-connected .account-panel[data-decorative-effects-active]::before,
+.machine.is-connected .account-panel[data-decorative-effects-active]::after {
+  animation-play-state: running;
 }

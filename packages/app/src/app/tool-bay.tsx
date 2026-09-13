@@ -3,6 +3,7 @@
 import { Activity, Check, ChevronRight, Eject } from "lucide-react";
 import { memo, useLayoutEffect, useRef, type CSSProperties } from "react";
 import { demoModules, type DemoModule } from "./modules";
+import { useDecorativeAnimationVisibility } from "./use-decorative-animation-visibility";
 
 export const ToolBay = memo(function ToolBay({
   connected,
@@ -17,6 +18,8 @@ export const ToolBay = memo(function ToolBay({
 }) {
   const gridRef = useRef<HTMLDivElement>(null);
   const gridViewportRef = useRef<HTMLDivElement>(null);
+  const toolBayRef = useRef<HTMLElement>(null);
+  useDecorativeAnimationVisibility(toolBayRef);
 
   useLayoutEffect(() => {
     const grid = gridRef.current;
@@ -45,7 +48,7 @@ export const ToolBay = memo(function ToolBay({
   const MountedIcon = selectedModule?.icon;
 
   return (
-    <section className="tool-bay">
+    <section ref={toolBayRef} className="tool-bay">
       <div className="bay-rail bay-rail-left" aria-hidden="true" />
       <div className="bay-rail bay-rail-right" aria-hidden="true" />
 

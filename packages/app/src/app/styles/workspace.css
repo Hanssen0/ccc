@@ -96,10 +96,19 @@
 
 .module-workspace-slot.is-active .workspace-grid-orbit {
   animation: workspace-grid-translate 90s linear infinite;
+  animation-play-state: paused;
 }
 
 .module-workspace-slot.is-active .workspace-grid-plane {
   animation: workspace-grid-rotate 2000s linear infinite;
+  animation-play-state: paused;
+}
+
+.module-workspace-slot.is-active[data-decorative-effects-active]
+  .workspace-grid-orbit,
+.module-workspace-slot.is-active[data-decorative-effects-active]
+  .workspace-grid-plane {
+  animation-play-state: running;
 }
 
 @keyframes workspace-grid-rotate {
@@ -146,10 +155,6 @@
   letter-spacing: 0.12em;
 }
 
-.module-workspace-slot.is-active .workspace-hardware {
-  animation: workspace-detail-enter 360ms ease 180ms backwards;
-}
-
 .workspace-hardware-line {
   height: 1px;
   flex: 1;
@@ -184,9 +189,7 @@
   z-index: 1;
 }
 
-.module-workspace-slot.is-active
-  .workspace-header
-  > *:not(.workspace-header-glyph-viewport) {
+.module-workspace-slot.is-active .module-workspace > .workspace-header {
   animation: workspace-detail-enter 420ms var(--easing-mechanical) 230ms
     backwards;
 }
@@ -216,18 +219,6 @@
   font-weight: 700;
   line-height: 1;
   user-select: none;
-}
-
-.module-workspace-slot.is-active .workspace-header-glyph {
-  animation: workspace-glyph-enter 720ms var(--easing-mechanical) 170ms
-    backwards;
-}
-
-@keyframes workspace-glyph-enter {
-  from {
-    opacity: 0;
-    transform: translate(24px, -16px);
-  }
 }
 
 .workspace-header h1 {
@@ -294,31 +285,9 @@
   padding: 27px 34px 31px;
 }
 
-.module-workspace-slot.is-active .module-fields {
-  animation: workspace-control-enter 440ms var(--easing-mechanical) 310ms
+.module-workspace-slot.is-active .module-workspace > .workspace-core {
+  animation: workspace-detail-enter 440ms var(--easing-mechanical) 310ms
     backwards;
-}
-
-.module-workspace-slot.is-active .module-actions {
-  animation: workspace-control-enter 440ms var(--easing-mechanical) 500ms
-    backwards;
-}
-
-.module-workspace-slot.is-active .module-readout {
-  animation: workspace-control-enter 440ms var(--easing-mechanical) 570ms
-    backwards;
-}
-
-@keyframes workspace-control-enter {
-  from {
-    opacity: 0;
-    transform: translateY(11px);
-  }
-
-  76% {
-    opacity: 1;
-    transform: translateY(-1px);
-  }
 }
 
 @media (max-width: 680px) {

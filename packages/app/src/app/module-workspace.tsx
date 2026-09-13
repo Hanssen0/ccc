@@ -7,6 +7,7 @@ import type { DemoLogger } from "./activity-console";
 import { ModuleReadout, type ModuleReadoutState } from "./module-readout";
 import type { DemoModule, SubmitTransaction } from "./modules";
 import { showTransaction } from "./modules/module-helpers";
+import { useDecorativeAnimationVisibility } from "./use-decorative-animation-visibility";
 
 export const ModuleWorkspace = memo(function ModuleWorkspace({
   active,
@@ -32,6 +33,7 @@ export const ModuleWorkspace = memo(function ModuleWorkspace({
   const Module = module?.component;
   const slotRef = useRef<HTMLDivElement>(null);
   const workspaceRef = useRef<HTMLElement>(null);
+  useDecorativeAnimationVisibility(slotRef);
   const exitRef = useRef<
     | {
         completed: boolean;
