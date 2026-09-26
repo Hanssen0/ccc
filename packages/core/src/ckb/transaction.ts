@@ -1678,15 +1678,6 @@ export class Transaction extends Entity.Base<TransactionLike, Transaction>() {
   }
 
   /**
-   * Sets output data at an index.
-   *
-   * @deprecated Use {@link setOutputData} instead.
-   */
-  setOutputDataAt(index: number, data: HexLike): void {
-    this.setOutputData(index, data);
-  }
-
-  /**
    * Sets output data at an index, filling any skipped positions with empty data.
    *
    * @param index - The index of the output data.
@@ -2070,42 +2061,6 @@ export class Transaction extends Entity.Base<TransactionLike, Transaction>() {
     }
 
     this.witnesses[i] = hexFrom(witness);
-  }
-
-  /**
-   * Gets the witness at an index as `WitnessArgs`.
-   *
-   * @deprecated Use {@link getWitnessArgs} instead.
-   */
-  getWitnessArgsAt(index: NumLike): WitnessArgs | undefined {
-    return this.getWitnessArgs(index);
-  }
-
-  /**
-   * Gets the witness at an index as `WitnessArgs`, throwing if decoding fails.
-   *
-   * @deprecated Use {@link getWitnessArgsUnsafe} instead.
-   */
-  getWitnessArgsAtUnsafe(index: NumLike): WitnessArgs | undefined {
-    return this.getWitnessArgsUnsafe(index);
-  }
-
-  /**
-   * Sets a witness at an index from `WitnessArgs`.
-   *
-   * @deprecated Use {@link setWitnessArgs} instead.
-   */
-  setWitnessArgsAt(index: number, witnessLike: WitnessArgsLike): void {
-    this.setWitnessArgs(index, witnessLike);
-  }
-
-  /**
-   * Sets a witness at an index.
-   *
-   * @deprecated Use {@link setWitness} instead.
-   */
-  setWitnessAt(index: number, witness: HexLike): void {
-    this.setWitness(index, witness);
   }
 
   /**
