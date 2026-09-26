@@ -7,7 +7,7 @@ import {
   Entity,
 } from "../codec/index.js";
 import { Zero } from "../fixedPoint/index.js";
-import { type Hex, type HexLike } from "../hex/index.js";
+import { type Hex } from "../hex/index.js";
 import { mol } from "../molecule/index.js";
 import { numFrom, NumLike, numToHex, type Num } from "../num/index.js";
 import { gcd } from "../utils/index.js";
@@ -468,40 +468,4 @@ export class Epoch extends Entity.Base<EpochLike, Epoch>() {
       (epochInMilliseconds * numerator) / denominator
     );
   }
-}
-
-/**
- * epochFrom
- *
- * @deprecated prefer using Epoch.from() directly.
- *
- * @param epochLike - Epoch-like value to convert.
- * @returns Epoch instance corresponding to the input.
- */
-export function epochFrom(epochLike: EpochLike): Epoch {
-  return Epoch.from(epochLike);
-}
-
-/**
- * epochFromHex
- *
- * @deprecated use Epoch.fromNum() with numeric input instead.
- *
- * @param hex - Hex-like or numeric-like value encoding a packed epoch.
- * @returns Decoded Epoch instance.
- */
-export function epochFromHex(hex: HexLike): Epoch {
-  return Epoch.fromNum(hex);
-}
-
-/**
- * epochToHex
- *
- * @deprecated use Epoch.from(epochLike).toPackedHex() instead.
- *
- * @param epochLike - Value convertible to an Epoch (object, tuple or Epoch).
- * @returns Hex string representing the packed epoch encoding.
- */
-export function epochToHex(epochLike: EpochLike): Hex {
-  return Epoch.from(epochLike).toPackedHex();
 }
