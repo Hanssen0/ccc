@@ -25,7 +25,6 @@ import {
   numFromBytes,
   numMax,
   numToBytes,
-  numToHex,
 } from "../num/index.js";
 import type { Signer } from "../signer/index.js";
 import { apply, reduceAsync } from "../utils/index.js";
@@ -1370,21 +1369,6 @@ export class Transaction extends Entity.Base<TransactionLike, Transaction>() {
       outputs: skeleton.outputs.toArray().map((output) => output.cellOutput),
       outputsData: skeleton.outputs.toArray().map((output) => output.data),
       witnesses: skeleton.witnesses.toArray(),
-    });
-  }
-
-  /**
-   * @deprecated
-   * Use ccc.stringify instead.
-   * stringify the tx to JSON string.
-   */
-  stringify(): string {
-    return JSON.stringify(this, (_, value) => {
-      if (typeof value === "bigint") {
-        return numToHex(value);
-      }
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-      return value;
     });
   }
 
