@@ -44,17 +44,6 @@ export enum SignerType {
 
 /**
  * @public
- * @deprecated Wallet integrations now expose one signer per selectable network.
- * This compatibility type will be removed in the next major release.
- */
-export type NetworkPreference = {
-  addressPrefix: string;
-  signerType: SignerType;
-  network: string;
-};
-
-/**
- * @public
  */
 export class Signature {
   constructor(
@@ -77,30 +66,6 @@ export abstract class Signer {
 
   get client(): Client {
     return this.client_;
-  }
-
-  /**
-   * @deprecated Wallet integrations now use fixed-network signers.
-   */
-  matchNetworkPreference(
-    preferences: NetworkPreference[],
-    currentNetwork: string | undefined,
-  ): NetworkPreference | undefined {
-    if (
-      currentNetwork !== undefined &&
-      preferences.some(
-        ({ signerType, addressPrefix, network }) =>
-          signerType === this.type &&
-          addressPrefix === this.client.addressPrefix &&
-          network === currentNetwork,
-      )
-    ) {
-      return;
-    }
-    return preferences.find(
-      ({ signerType, addressPrefix }) =>
-        signerType === this.type && addressPrefix === this.client.addressPrefix,
-    );
   }
 
   static async verifyMessage(
