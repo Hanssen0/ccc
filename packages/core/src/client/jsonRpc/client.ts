@@ -199,7 +199,6 @@ export abstract class ClientJsonRpc extends Client {
   /**
    * Get tip block header
    *
-   * @param verbosity - Deprecated; this parameter has no effect.
    * @returns BlockHeader
    */
   getTipHeader = this.buildSender(
@@ -212,8 +211,6 @@ export abstract class ClientJsonRpc extends Client {
    * Get block by block number
    *
    * @param blockNumber - The block number.
-   * @param verbosity - Deprecated; this parameter has no effect.
-   * @param withCycles - Deprecated; this parameter has no effect.
    * @returns Block
    */
   getBlockByNumberNoCache = this.buildSender(
@@ -226,8 +223,6 @@ export abstract class ClientJsonRpc extends Client {
    * Get block by block hash
    *
    * @param blockHash - The block hash.
-   * @param verbosity - Deprecated; this parameter has no effect.
-   * @param withCycles - Deprecated; this parameter has no effect.
    * @returns Block
    */
   getBlockByHashNoCache = this.buildSender(
@@ -240,7 +235,6 @@ export abstract class ClientJsonRpc extends Client {
    * Get header by block number
    *
    * @param blockNumber - The block number.
-   * @param verbosity - Deprecated; this parameter has no effect.
    * @returns BlockHeader
    */
   getHeaderByNumberNoCache = this.buildSender(
@@ -253,7 +247,6 @@ export abstract class ClientJsonRpc extends Client {
    * Get header by block hash
    *
    * @param blockHash - The block hash.
-   * @param verbosity - Deprecated; this parameter has no effect.
    * @returns BlockHeader
    */
   getHeaderByHashNoCache = this.buildSender(
