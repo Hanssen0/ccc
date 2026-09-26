@@ -153,36 +153,6 @@ export class Epoch extends Entity.Base<EpochLike, Epoch>() {
   }
 
   /**
-   * Backwards-compatible array-style index 0 referencing the whole epoch integer.
-   *
-   * @returns integer portion (Num)
-   * @deprecated Use `.integer` property instead.
-   */
-  get 0(): Num {
-    return this.integer;
-  }
-
-  /**
-   * Backwards-compatible array-style index 1 referencing the epoch fractional numerator.
-   *
-   * @returns numerator portion (Num)
-   * @deprecated Use `.numerator` property instead.
-   */
-  get 1(): Num {
-    return this.numerator;
-  }
-
-  /**
-   * Backwards-compatible array-style index 2 referencing the epoch fractional denominator.
-   *
-   * @returns denominator portion (Num)
-   * @deprecated Use `.denominator` property instead.
-   */
-  get 2(): Num {
-    return this.denominator;
-  }
-
-  /**
    * Convert this Epoch into its RPC-style packed numeric representation (Num).
    *
    * Packing layout (little-endian style fields):
