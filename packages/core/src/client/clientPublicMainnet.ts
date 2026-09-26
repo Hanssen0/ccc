@@ -18,12 +18,8 @@ export class ClientPublicMainnet extends ClientJsonRpc {
       : ["https://mainnet.ckb.dev/", "https://mainnet.ckbapp.dev/"];
   }
 
-  private constructor(
-    url: string,
-    requestor: RequestorJsonRpc,
-    config?: ClientConfig,
-  ) {
-    super(url, requestor, config);
+  private constructor(requestor: RequestorJsonRpc, config?: ClientConfig) {
+    super(requestor, config);
   }
 
   /** Creates a Client that borrows an existing Transport. */
@@ -38,7 +34,7 @@ export class ClientPublicMainnet extends ClientJsonRpc {
       ...requestorConfig
     } = config;
     const requestor = this.newRequestor(requestorConfig);
-    return new ClientPublicMainnet("", requestor, {
+    return new ClientPublicMainnet(requestor, {
       cache,
       scripts,
       addressResolver,
@@ -67,7 +63,7 @@ export class ClientPublicMainnet extends ClientJsonRpc {
       urls,
     }).map(
       (requestor) =>
-        new ClientPublicMainnet(urls[0], requestor, {
+        new ClientPublicMainnet(requestor, {
           cache,
           scripts,
           addressResolver,

@@ -17,7 +17,6 @@ export abstract class Client {
     this.cache = config?.cache ?? new ClientCacheMemory();
   }
 
-  abstract get url(): string;
   abstract get addressPrefix(): string;
 
   abstract getKnownScript(script: KnownScript): Promise<ScriptInfo>;

@@ -91,7 +91,6 @@ function handleJsonRpcError(errAny: unknown): never {
  */
 export abstract class ClientJsonRpc extends Client {
   protected constructor(
-    private readonly url_: string,
     public readonly requestor: RequestorJsonRpc,
     config?: ClientConfig,
   ) {
@@ -116,17 +115,6 @@ export abstract class ClientJsonRpc extends Client {
       ...config,
       onError: handleJsonRpcError,
     });
-  }
-
-  /**
-   * Returns the legacy primary URL of the JSON-RPC server.
-   *
-   * @returns The URL of the JSON-RPC server.
-   * @deprecated A Client may use multiple endpoints or a Transport without a
-   * URL, so this value does not reliably identify its connection.
-   */
-  get url(): string {
-    return this.url_;
   }
 
   /**

@@ -71,13 +71,6 @@ export abstract class Client {
     this.addressResolver = config?.addressResolver;
   }
 
-  /**
-   * The legacy primary URL associated with this Client.
-   *
-   * @deprecated A Client may use multiple endpoints or a Transport without a
-   * URL, so this value does not reliably identify its connection.
-   */
-  abstract get url(): string;
   abstract get addressPrefix(): string;
 
   /**

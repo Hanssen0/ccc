@@ -18,12 +18,8 @@ export class ClientPublicTestnet extends ClientJsonRpc {
       : ["https://testnet.ckb.dev/", "https://testnet.ckbapp.dev/"];
   }
 
-  private constructor(
-    url: string,
-    requestor: RequestorJsonRpc,
-    config?: ClientConfig,
-  ) {
-    super(url, requestor, config);
+  private constructor(requestor: RequestorJsonRpc, config?: ClientConfig) {
+    super(requestor, config);
   }
 
   /** Creates a Client that borrows an existing Transport. */
@@ -38,7 +34,7 @@ export class ClientPublicTestnet extends ClientJsonRpc {
       ...requestorConfig
     } = config;
     const requestor = this.newRequestor(requestorConfig);
-    return new ClientPublicTestnet("", requestor, {
+    return new ClientPublicTestnet(requestor, {
       cache,
       scripts,
       addressResolver,
@@ -67,7 +63,7 @@ export class ClientPublicTestnet extends ClientJsonRpc {
       urls,
     }).map(
       (requestor) =>
-        new ClientPublicTestnet(urls[0], requestor, {
+        new ClientPublicTestnet(requestor, {
           cache,
           scripts,
           addressResolver,
