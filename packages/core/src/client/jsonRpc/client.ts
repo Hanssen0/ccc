@@ -5,10 +5,8 @@ import {
   TransactionLike,
 } from "../../ckb/index.js";
 import { Hex, HexLike, hexFrom } from "../../hex/index.js";
-import {
-  RequestorJsonRpc,
-  RequestorJsonRpcConfig,
-} from "../../jsonRpc/requestor.js";
+import { RequestorJsonRpc } from "../../jsonRpc/requestor.js";
+import type { JsonRpcTransport } from "../../jsonRpc/transports/index.js";
 import { Num, NumLike, numFrom, numToHex } from "../../num/index.js";
 import { Owner, apply } from "../../utils/index.js";
 import type { ClientConfig } from "../client.js";
@@ -88,14 +86,17 @@ function handleJsonRpcError(errAny: unknown): never {
   throw new ErrorClientBase(err);
 }
 
-export type ClientJsonRpcConfig = RequestorJsonRpcConfig &
-  ClientConfig & {
-    /**
-     * @deprecated Requestor injection is supported only by legacy constructors.
-     * Use a borrowed Transport with `Client.new` or let `Client.open` create one.
-     */
-    requestor?: RequestorJsonRpc;
-  };
+export type ClientJsonRpcConfig = ClientConfig & {
+  fallbacks?: string[];
+  timeout?: number;
+  maxConcurrent?: number;
+  transport?: JsonRpcTransport;
+  /**
+   * @deprecated Requestor injection is supported only by legacy constructors.
+   * Use a borrowed Transport with `Client.new` or let `Client.open` create one.
+   */
+  requestor?: RequestorJsonRpc;
+};
 
 /**
  * An abstract class implementing JSON-RPC client functionality for a specific URL and timeout.

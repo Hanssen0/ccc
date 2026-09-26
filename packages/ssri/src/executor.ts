@@ -116,7 +116,11 @@ export abstract class Executor {
   }
 }
 
-export type ExecutorJsonRpcConfig = ccc.RequestorJsonRpcConfig & {
+export type ExecutorJsonRpcConfig = {
+  fallbacks?: string[];
+  timeout?: number;
+  maxConcurrent?: number;
+  transport?: ccc.JsonRpcTransport;
   /**
    * @deprecated Requestor injection is supported only by the legacy
    * constructor. Use a borrowed Transport with `ExecutorJsonRpc.new` or let
